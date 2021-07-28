@@ -47,11 +47,11 @@ while True:
         y1 = face.top()
         x2 = face.right()
         y2 = face.bottom()
-        #displayFaceTrack()
+        displayFaceTrack()
 
         landmarks = predictor(gray, face)
 
-        #displayLandmarks(frame, landmarks, face)
+        displayLandmarks(frame, landmarks, face)
         displayNose(frame,landmarks,face)
 
         #2D capture points:
