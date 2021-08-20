@@ -8,6 +8,8 @@ https://learnopencv.com/head-pose-estimation-using-opencv-and-dlib/
 import cv2
 import numpy as np
 import dlib
+from PyQt5.QtWidgets import QApplication, QMainWindow, \
+    QPushButton, QVBoxLayout, QWidget
 
 cap = cv2.VideoCapture(0)
 
@@ -21,6 +23,23 @@ left_eye = 37
 right_eye = 46
 left_mouth = 49
 right_mouth = 55
+
+def button_pressed():
+    print("Pressed")
+    _, frame = cap.read()
+
+def createApp():
+    app = QApplication([])
+    win = QMainWindow()
+    central_widget = QWidget()
+    button = QPushButton('Push', central_widget)
+    button.clicked.connect(button_pressed)
+    layout = QVBoxLayout(central_widget)
+    layout.addWidget(button)
+    win.setCentralWidget(central_widget)
+    win.show()
+    app.exit(app.exec_())
+    cap.release()
 
 def displayLandmarks(frame, landmarks, face):
     
@@ -36,6 +55,8 @@ def displayNose(frame, ladnmarks, face):
 
 def displayFaceTrack():
     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 3)
+
+
 
 while True:
     _, frame = cap.read()
