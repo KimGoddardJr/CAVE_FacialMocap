@@ -47,11 +47,11 @@ while True:
         y1 = face.top()
         x2 = face.right()
         y2 = face.bottom()
-        displayFaceTrack()
+        #displayFaceTrack()
 
         landmarks = predictor(gray, face)
 
-        displayLandmarks(frame, landmarks, face)
+        #displayLandmarks(frame, landmarks, face)
         displayNose(frame,landmarks,face)
 
         #2D capture points:
@@ -103,5 +103,9 @@ while True:
     cv2.imshow("Frame", frame)
 
     key = cv2.waitKey(1)
-    if key == 27:
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        print("Quit")
         break
+
+cap.release()
+cv2.destroyAllWindows()
