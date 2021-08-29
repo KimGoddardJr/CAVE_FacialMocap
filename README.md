@@ -8,6 +8,7 @@ An Investigation into Facial Motion Capture Techniques using Consumer Technologi
 
 ## Build
 ### Dependencies
+* PyQt
 * OpenCV
 * dlib
 

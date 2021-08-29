@@ -16,6 +16,8 @@ import cv2
 import numpy as np
 import dlib
 
+showFaceTrack = True
+showLandmarks = True
 
 class ShapePredictor:
     def __init__(self):
@@ -30,7 +32,6 @@ class ShapePredictor:
 
         self.frame = None
         self.Grey_Image = None
-        self.landmarks = None
 
         # shape_predictor_68_face_landmarks.dat file must be in same directory
         self.detector = dlib.get_frontal_face_detector()
@@ -42,31 +43,12 @@ class ShapePredictor:
     def getFaces(self):
         #Run Face Detection
         faces = self.detector(self.Grey_Image)
+        return faces
 
-        for face in faces:
-            x1 = face.left()
-            y1 = face.top()
-            x2 = face.right()
-            y2 = face.bottom()
-            #displayFaceTrack()
-
-            #Get Facial Landmarks
-            self.landmarks = self.predictor(self.Grey_Image, face)
-            #self.displayLandmarks(self.frame, self.landmarks, face)
-
-    def displayLandmarks(self, frame, landmarks, face):
-        for n in range(0, self.numLandmarks):
-            x = landmarks.part(n).x
-            y = landmarks.part(n).y
-            cv2.circle(frame, (x, y), 4, (255, 0, 0), -1)
-
-    def displayNose(self, frame, landmarks):
-        x = landmarks.part(self.nose-1).x
-        y = landmarks.part(self.nose-1).y
-        cv2.circle(frame, (x, y), 4, (255, 255, 255), -1)
-
-    def displayFaceTrack(self):
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 3)
+    def getLandmarks(self, face):
+        #Get Facial Landmarks
+        landmarks = self.predictor(self.Grey_Image, face)
+        return landmarks
 
     def poseEstimation(self):
         #2D capture points:
@@ -120,14 +102,26 @@ class MainWindow(QWidget):
     def __init__(self):
         super(MainWindow, self).__init__()
 
+        title = "OpenCV Face Mocap [WIP] - s5400010"
+        self.setWindowTitle(title)
+
         self.VBL = QVBoxLayout()
 
         self.FeedLabel = QLabel()
         self.VBL.addWidget(self.FeedLabel)
 
+        #Buttons
         self.CancelBtn = QPushButton("Cancel")
         self.CancelBtn.clicked.connect(self.CancelFeed)
         self.VBL.addWidget(self.CancelBtn)
+
+        self.ToggleFaceLoc = QPushButton("Show/Hide Face Track")
+        self.ToggleFaceLoc.clicked.connect(self.TglFaceLoc)
+        self.VBL.addWidget(self.ToggleFaceLoc)
+
+        self.ToggleLandmarks = QPushButton("Show/Hide Landmarks")
+        self.ToggleLandmarks.clicked.connect(self.TglLandmarks)
+        self.VBL.addWidget(self.ToggleLandmarks)
 
         self.CameraThread = Camera_Worker()
 
@@ -142,6 +136,14 @@ class MainWindow(QWidget):
     def CancelFeed(self):
         self.CameraThread.stop()
 
+    def TglFaceLoc(self):
+        global showFaceTrack
+        showFaceTrack = not showFaceTrack
+
+    def TglLandmarks(self):
+        global showLandmarks 
+        showLandmarks = not showLandmarks
+
 class Camera_Worker(QThread):
 
     ImageUpdate = pyqtSignal(QImage)
@@ -154,12 +156,27 @@ class Camera_Worker(QThread):
 
         while self.ThreadActive:
             _, frame = self.cap.read()
+
+
             if _:
+                #Get OpenCV Image
                 self.Face.setImgFrame(frame)
-                self.Face.getFaces()
+                faces = self.Face.getFaces()
+
+                for face in faces:
+                    if showFaceTrack:
+                        self.displayFaceTrack(face, frame)
+
+                    if showLandmarks:
+                        landmarks = self.Face.getLandmarks(face)
+                        self.displayLandmarks(landmarks, frame)
+
+
                 RGB_Image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 #Grey_Image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 FlippedImage = cv2.flip(RGB_Image, 1)
+
+                #Convert to Qt Image
                 ConvertToQtFormat = QImage(FlippedImage.data, FlippedImage.shape[1], FlippedImage.shape[0], QImage.Format_RGB888)
                 #ConvertToQtFormat = QImage(FlippedImage.data, FlippedImage.shape[1], FlippedImage.shape[0], QImage.Format_Grayscale8)
                 Pic = ConvertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
@@ -169,6 +186,24 @@ class Camera_Worker(QThread):
         print("Stop feed...")
         self.ThreadActive = False
         self.quit()
+
+    def displayNose(self, frame, landmarks):
+        x = landmarks.part(self.nose-1).x
+        y = landmarks.part(self.nose-1).y
+        cv2.circle(frame, (x, y), 4, (255, 255, 255), -1)
+
+    def displayFaceTrack(self, face, frame):
+        x1 = face.left()
+        y1 = face.top()
+        x2 = face.right()
+        y2 = face.bottom()
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 3)
+
+    def displayLandmarks(self, landmarks, frame):
+        for n in range(0, 68): #todo: update numLandmarks
+            x = landmarks.part(n).x
+            y = landmarks.part(n).y
+            cv2.circle(frame, (x, y), 4, (255, 0, 0), -1)
 
 if __name__ == "__main__":
     App = QApplication(sys.argv)
