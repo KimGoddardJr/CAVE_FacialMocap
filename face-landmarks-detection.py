@@ -1,115 +1,177 @@
-'''
-https://pysource.com/2019/03/12/face-landmarks-detection-opencv-with-python/
-https://learnopencv.com/head-pose-estimation-using-opencv-and-dlib/
 
-'''
+# [1] Qt5/OpenCV window code modified from:
+# https://www.codepile.net/pile/ey9KAnxn
 
+# [2] Face landmark detection code modified from:
+# https://pysource.com/2019/03/12/face-landmarks-detection-opencv-with-python/
+# [3] Head pose estimation code modified from:
+# https://learnopencv.com/head-pose-estimation-using-opencv-and-dlib/
+# (See P.I. submission for full references)
 
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+import sys
 import cv2
 import numpy as np
 import dlib
-from PyQt5.QtWidgets import QApplication, QMainWindow, \
-    QPushButton, QVBoxLayout, QWidget
-
-cap = cv2.VideoCapture(0)
-
-detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
-
-numLandmarks = 68
-chin = 9
-nose = 34
-left_eye = 37
-right_eye = 46
-left_mouth = 49
-right_mouth = 55
-
-def displayLandmarks(frame, landmarks, face):
-    
-    for n in range(0, numLandmarks):
-        x = landmarks.part(n).x
-        y = landmarks.part(n).y
-        cv2.circle(frame, (x, y), 4, (255, 0, 0), -1)
-
-def displayNose(frame, ladnmarks, face):
-    x = landmarks.part(nose-1).x
-    y = landmarks.part(nose-1).y
-    cv2.circle(frame, (x, y), 4, (255, 255, 255), -1)
-
-def displayFaceTrack():
-    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 3)
 
 
+class ShapePredictor:
+    def __init__(self):
+        # identify key landmarks for face direction
+        self.numLandmarks = 68
+        self.chin = 9
+        self.nose = 34
+        self.left_eye = 37
+        self.right_eye = 46
+        self.left_mouth = 49
+        self.right_mouth = 55
 
-while True:
-    _, frame = cap.read()
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        self.frame = None
+        self.Grey_Image = None
+        self.landmarks = None
 
-    faces = detector(gray)
-    for face in faces:
-        x1 = face.left()
-        y1 = face.top()
-        x2 = face.right()
-        y2 = face.bottom()
-        #displayFaceTrack()
+        # shape_predictor_68_face_landmarks.dat file must be in same directory
+        self.detector = dlib.get_frontal_face_detector()
+        self.predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
-        landmarks = predictor(gray, face)
+    def setImgFrame(self, frame):
+        self.Grey_Image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+  
+    def getFaces(self):
+        #Run Face Detection
+        faces = self.detector(self.Grey_Image)
 
-        #displayLandmarks(frame, landmarks, face)
-        displayNose(frame,landmarks,face)
+        for face in faces:
+            x1 = face.left()
+            y1 = face.top()
+            x2 = face.right()
+            y2 = face.bottom()
+            #displayFaceTrack()
 
+            #Get Facial Landmarks
+            self.landmarks = self.predictor(self.Grey_Image, face)
+            #self.displayLandmarks(self.frame, self.landmarks, face)
+
+    def displayLandmarks(self, frame, landmarks, face):
+        for n in range(0, self.numLandmarks):
+            x = landmarks.part(n).x
+            y = landmarks.part(n).y
+            cv2.circle(frame, (x, y), 4, (255, 0, 0), -1)
+
+    def displayNose(self, frame, landmarks):
+        x = landmarks.part(self.nose-1).x
+        y = landmarks.part(self.nose-1).y
+        cv2.circle(frame, (x, y), 4, (255, 255, 255), -1)
+
+    def displayFaceTrack(self):
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 3)
+
+    def poseEstimation(self):
         #2D capture points:
-        cap_points = np.array([
-                                (landmarks.part(nose-1).x, landmarks.part(nose-1).y),     
-                                (landmarks.part(chin-1).x, landmarks.part(chin-1).y),     # Chin
-                                (landmarks.part(left_eye-1).x, landmarks.part(left_eye-1).y),     # Left eye left corner
-                                (landmarks.part(right_eye-1).x, landmarks.part(right_eye-1).y),     # Right eye right corne
-                                (landmarks.part(left_mouth-1).x, landmarks.part(left_mouth-1).y),     # Left Mouth corner
-                                (landmarks.part(right_mouth-1).x, landmarks.part(right_mouth-1).y)      # Right mouth corner
-                            ], dtype="double")
+            cap_points = np.array([
+                                    (self.landmarks.part(self.nose-1).x, self.landmarks.part(self.nose-1).y),     
+                                    (self.landmarks.part(self.chin-1).x, self.landmarks.part(self.chin-1).y),     # Chin
+                                    (self.landmarks.part(self.left_eye-1).x, self.landmarks.part(self.left_eye-1).y),     # Left eye left corner
+                                    (self.landmarks.part(self.right_eye-1).x, self.landmarks.part(self.right_eye-1).y),     # Right eye right corne
+                                    (self.landmarks.part(self.left_mouth-1).x, self.landmarks.part(self.left_mouth-1).y),     # Left Mouth corner
+                                    (self.landmarks.part(self.right_mouth-1).x, self.landmarks.part(self.right_mouth-1).y)      # Right mouth corner
+                                ], dtype="double")
 
-        # 3D model points.
-        model_points = np.array([
-                                (0.0, 0.0, 0.0),             # Nose tip
-                                (0.0, -330.0, -65.0),        # Chin
-                                (-225.0, 170.0, -135.0),     # Left eye left corner
-                                (225.0, 170.0, -135.0),      # Right eye right corne
-                                (-150.0, -150.0, -125.0),    # Left Mouth corner
-                                (150.0, -150.0, -125.0)      # Right mouth corner
-                            ])
+            # 3D model points (taken from [3])
+            model_points = np.array([
+                                    (0.0, 0.0, 0.0),             # Nose tip
+                                    (0.0, -330.0, -65.0),        # Chin
+                                    (-225.0, 170.0, -135.0),     # Left eye left corner
+                                    (225.0, 170.0, -135.0),      # Right eye right corne
+                                    (-150.0, -150.0, -125.0),    # Left Mouth corner
+                                    (150.0, -150.0, -125.0)      # Right mouth corner
+                                ])
+
+            # Camera internals
+            width = cap.get(cv2.CAP_PROP_FRAME_WIDTH )
+            height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT )
+
+            focal_length = width
+            center = (width/2, height/2)
+            camera_matrix = np.array(
+                                    [[focal_length, 0, center[0]],
+                                    [0, focal_length, center[1]],
+                                    [0, 0, 1]], dtype = "double"
+                                    )
+
+            dist_coeffs = np.zeros((4,1)) # Assuming no lens distortion
+            (success, rotation_vector, translation_vector) = cv2.solvePnP(model_points, cap_points, camera_matrix, dist_coeffs, flags=cv2.SOLVEPNP_ITERATIVE)
+
+            (nose_end_point2D, jacobian) = cv2.projectPoints(np.array([(0.0, 0.0, 1000.0)]), rotation_vector, translation_vector, camera_matrix, dist_coeffs)
+
+            for p in cap_points:
+                cv2.circle(frame, (int(p[0]), int(p[1])), 3, (0,0,255), -1)
+
+            p1 = ( int(cap_points[0][0]), int(cap_points[0][1]))
+            p2 = ( int(nose_end_point2D[0][0][0]), int(nose_end_point2D[0][0][1]))
+
+            cv2.line(frame, p1, p2, (255,0,0), 2)
+        #outside for loop: cv2.imshow("Frame",frame)
 
 
-        # Camera internals
-        width = cap.get(cv2.CAP_PROP_FRAME_WIDTH )
-        height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT )
+class MainWindow(QWidget):
+    def __init__(self):
+        super(MainWindow, self).__init__()
 
-        focal_length = width
-        center = (width/2, height/2)
-        camera_matrix = np.array(
-                                [[focal_length, 0, center[0]],
-                                [0, focal_length, center[1]],
-                                [0, 0, 1]], dtype = "double"
-                                )
+        self.VBL = QVBoxLayout()
 
-        dist_coeffs = np.zeros((4,1)) # Assuming no lens distortion
-        (success, rotation_vector, translation_vector) = cv2.solvePnP(model_points, cap_points, camera_matrix, dist_coeffs, flags=cv2.SOLVEPNP_ITERATIVE)
+        self.FeedLabel = QLabel()
+        self.VBL.addWidget(self.FeedLabel)
 
-        (nose_end_point2D, jacobian) = cv2.projectPoints(np.array([(0.0, 0.0, 1000.0)]), rotation_vector, translation_vector, camera_matrix, dist_coeffs)
+        self.CancelBtn = QPushButton("Cancel")
+        self.CancelBtn.clicked.connect(self.CancelFeed)
+        self.VBL.addWidget(self.CancelBtn)
 
-        for p in cap_points:
-            cv2.circle(frame, (int(p[0]), int(p[1])), 3, (0,0,255), -1)
+        self.CameraThread = Camera_Worker()
 
-        p1 = ( int(cap_points[0][0]), int(cap_points[0][1]))
-        p2 = ( int(nose_end_point2D[0][0][0]), int(nose_end_point2D[0][0][1]))
+        self.CameraThread.start()
+        self.CameraThread.ImageUpdate.connect(self.ImageUpdateSlot)
+        self.setLayout(self.VBL)
 
-        cv2.line(frame, p1, p2, (255,0,0), 2)
 
-    cv2.imshow("Frame", frame)
+    def ImageUpdateSlot(self, Image):
+        self.FeedLabel.setPixmap(QPixmap.fromImage(Image))
 
-    key = cv2.waitKey(1)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        print("Quit")
-        break
+    def CancelFeed(self):
+        self.CameraThread.stop()
 
-cap.release()
-cv2.destroyAllWindows()
+class Camera_Worker(QThread):
+
+    ImageUpdate = pyqtSignal(QImage)
+    Face = ShapePredictor()
+    cap = cv2.VideoCapture(0)
+
+    def run(self):
+        self.ThreadActive = True
+        print("Attempt capture...")
+
+        while self.ThreadActive:
+            _, frame = self.cap.read()
+            if _:
+                self.Face.setImgFrame(frame)
+                self.Face.getFaces()
+                RGB_Image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                #Grey_Image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                FlippedImage = cv2.flip(RGB_Image, 1)
+                ConvertToQtFormat = QImage(FlippedImage.data, FlippedImage.shape[1], FlippedImage.shape[0], QImage.Format_RGB888)
+                #ConvertToQtFormat = QImage(FlippedImage.data, FlippedImage.shape[1], FlippedImage.shape[0], QImage.Format_Grayscale8)
+                Pic = ConvertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
+                self.ImageUpdate.emit(Pic)
+            else: print("ret = false")
+    def stop(self):
+        print("Stop feed...")
+        self.ThreadActive = False
+        self.quit()
+
+if __name__ == "__main__":
+    App = QApplication(sys.argv)
+    Root = MainWindow()
+    Root.show()
+    sys.exit(App.exec())
