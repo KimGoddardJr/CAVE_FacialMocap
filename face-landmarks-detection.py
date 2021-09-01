@@ -16,8 +16,10 @@ import cv2
 import numpy as np
 import dlib
 
-showFaceTrack = True
-showLandmarks = True
+streamEnabled = True
+showFaceTrack = False
+showLandmarks = False
+showNose = False
 
 class ShapePredictor:
     def __init__(self):
@@ -102,6 +104,7 @@ class MainWindow(QWidget):
     def __init__(self):
         super(MainWindow, self).__init__()
 
+        #Window
         title = "OpenCV Face Mocap [WIP] - s5400010"
         self.setWindowTitle(title)
 
@@ -111,7 +114,7 @@ class MainWindow(QWidget):
         self.VBL.addWidget(self.FeedLabel)
 
         #Buttons
-        self.CancelBtn = QPushButton("Cancel")
+        self.CancelBtn = QPushButton("Start/Stop Camera Feed")
         self.CancelBtn.clicked.connect(self.CancelFeed)
         self.VBL.addWidget(self.CancelBtn)
 
@@ -123,18 +126,27 @@ class MainWindow(QWidget):
         self.ToggleLandmarks.clicked.connect(self.TglLandmarks)
         self.VBL.addWidget(self.ToggleLandmarks)
 
+        #Workers
         self.CameraThread = Camera_Worker()
-
-        self.CameraThread.start()
+        if streamEnabled == True:
+            self.CameraThread.start()
         self.CameraThread.ImageUpdate.connect(self.ImageUpdateSlot)
         self.setLayout(self.VBL)
+        
 
 
     def ImageUpdateSlot(self, Image):
         self.FeedLabel.setPixmap(QPixmap.fromImage(Image))
 
     def CancelFeed(self):
-        self.CameraThread.stop()
+        global streamEnabled
+        streamEnabled = not streamEnabled
+
+        if streamEnabled == True:
+            self.CameraThread.start()
+
+        else:
+            self.CameraThread.stop()
 
     def TglFaceLoc(self):
         global showFaceTrack
@@ -157,7 +169,6 @@ class Camera_Worker(QThread):
         while self.ThreadActive:
             _, frame = self.cap.read()
 
-
             if _:
                 #Get OpenCV Image
                 self.Face.setImgFrame(frame)
@@ -171,6 +182,10 @@ class Camera_Worker(QThread):
                         landmarks = self.Face.getLandmarks(face)
                         self.displayLandmarks(landmarks, frame)
 
+                    elif showNose:
+                        landmarks = self.Face.getLandmarks(face)
+                        self.displayNose(frame, landmarks)
+
 
                 RGB_Image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 #Grey_Image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -181,15 +196,15 @@ class Camera_Worker(QThread):
                 #ConvertToQtFormat = QImage(FlippedImage.data, FlippedImage.shape[1], FlippedImage.shape[0], QImage.Format_Grayscale8)
                 Pic = ConvertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
                 self.ImageUpdate.emit(Pic)
-            else: print("ret = false")
+            
     def stop(self):
         print("Stop feed...")
         self.ThreadActive = False
         self.quit()
 
     def displayNose(self, frame, landmarks):
-        x = landmarks.part(self.nose-1).x
-        y = landmarks.part(self.nose-1).y
+        x = landmarks.part(34-1).x #todo: get nose
+        y = landmarks.part(34-1).y
         cv2.circle(frame, (x, y), 4, (255, 255, 255), -1)
 
     def displayFaceTrack(self, face, frame):
