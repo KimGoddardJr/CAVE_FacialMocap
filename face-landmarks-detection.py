@@ -16,47 +16,19 @@
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+from PyQt5 import uic
+
+from face_prediction import ShapePredictor
+
 import sys
 import cv2
 import numpy as np
-import dlib
 
 streamEnabled = True
 showFaceTrack = False
 showLandmarks = False
 showNose = False
-showPose = False
-
-class ShapePredictor:
-    def __init__(self):
-        # identify key landmarks for face direction
-        self.numLandmarks = 68
-        self.chin = 9
-        self.nose = 34
-        self.left_eye = 37
-        self.right_eye = 46
-        self.left_mouth = 49
-        self.right_mouth = 55
-
-        self.frame = None
-        self.Grey_Image = None
-
-        # shape_predictor_68_face_landmarks.dat file must be in same directory
-        self.detector = dlib.get_frontal_face_detector()
-        self.predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
-
-    def setImgFrame(self, frame):
-        self.Grey_Image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-  
-    def getFaces(self):
-        #Run Face Detection
-        faces = self.detector(self.Grey_Image)
-        return faces
-
-    def getLandmarks(self, face):
-        #Get Facial Landmarks
-        landmarks = self.predictor(self.Grey_Image, face)
-        return landmarks
+showPose = True
 
 
 class MainWindow(QWidget):
@@ -66,6 +38,8 @@ class MainWindow(QWidget):
         #Window
         title = "OpenCV Face Mocap [WIP] - s5400010"
         self.setWindowTitle(title)
+
+        #uic.loadUi('MainWindow.ui', self)
 
         self.VBL = QVBoxLayout()
 
@@ -135,8 +109,6 @@ class Camera_Worker(QThread):
     frame = None
     width = 0
     height = 0
-    camera_matrix = None
-    dist_coeffs = None
 
     def run(self):
         self.ThreadActive = True
@@ -160,11 +132,17 @@ class Camera_Worker(QThread):
                         landmarks = self.Face.getLandmarks(face)
                         self.displayLandmarks(landmarks, self.frame)
 
-                    elif showPose:
+                    if showPose:
+                        print("Show 3D Pose")
                         landmarks = self.Face.getLandmarks(face)
-                        pass
+                        end_point2D = self.poseEstimation(self.frame)
 
-                    elif showNose:
+                        p1 = ( landmarks.part(34-1).x, landmarks.part(34-1).y) #todo: get nose
+                        p2 = ( int(end_point2D[0][0][0]), int(end_point2D[0][0][1]))
+
+                        cv2.line(self.frame, p1, p2, (255,0,0), 2)
+                        
+                    if showNose:
                         landmarks = self.Face.getLandmarks(face)
                         self.displayNose(self.frame, landmarks)
 
@@ -188,13 +166,13 @@ class Camera_Worker(QThread):
         
         focal_length = self.width
         center = (self.width/2, self.height/2)
-        self.camera_matrix = np.array(
+        camera_matrix = np.array(
                                 [[focal_length, 0, center[0]],
                                 [0, focal_length, center[1]],
                                 [0, 0, 1]], dtype = "double"
                                 )
-                                
-        self.dist_coeffs = np.zeros((4,1)) # Assuming no lens distortion
+                            
+        return camera_matrix
         
 
     def displayNose(self, frame, landmarks):
@@ -217,50 +195,14 @@ class Camera_Worker(QThread):
 
     def poseEstimation(self, frame):
 
-        self.getCameraMatrix()
+        camera_matrix = self.getCameraMatrix()
+        dist_coeffs = np.zeros((4,1)) # Assuming no lens distortion
 
-        # 3D model points (taken from [3])
-        model_points = np.array([
-                            (0.0, 0.0, 0.0),             # Nose tip
-                            (0.0, -330.0, -65.0),        # Chin
-                            (-225.0, 170.0, -135.0),     # Left eye left corner
-                            (225.0, 170.0, -135.0),      # Right eye right corne
-                            (-150.0, -150.0, -125.0),    # Left Mouth corner
-                            (150.0, -150.0, -125.0)      # Right mouth corner
-                        ])
+        return self.Face.getCapPoints(camera_matrix, dist_coeffs)
 
-        #2D capture points:
-        cap_points = np.array([
-                            (self.landmarks.part(self.nose-1).x, self.landmarks.part(self.nose-1).y),     
-                            (self.landmarks.part(self.chin-1).x, self.landmarks.part(self.chin-1).y),     # Chin
-                            (self.landmarks.part(self.left_eye-1).x, self.landmarks.part(self.left_eye-1).y),     # Left eye left corner
-                            (self.landmarks.part(self.right_eye-1).x, self.landmarks.part(self.right_eye-1).y),     # Right eye right corne
-                            (self.landmarks.part(self.left_mouth-1).x, self.landmarks.part(self.left_mouth-1).y),     # Left Mouth corner
-                            (self.landmarks.part(self.right_mouth-1).x, self.landmarks.part(self.right_mouth-1).y)      # Right mouth corner
-                        ], dtype="double")
 
-        #SolvePnP for camera 
-        (success, rotation_vector, translation_vector) = cv2.solvePnP(self.model_points, 
-                                                                      cap_points, 
-                                                                      self.camera_matrix, 
-                                                                      self.dist_coeffs, 
-                                                                      flags=cv2.SOLVEPNP_ITERATIVE
-                                                                    )
 
-        (nose_end_point2D, jacobian) = cv2.projectPoints(np.array([(0.0, 0.0, 1000.0)]), 
-                                                                    rotation_vector, 
-                                                                    translation_vector, 
-                                                                    self.camera_matrix,
-                                                                    self.dist_coeffs
-                                                        )
 
-        for p in cap_points:
-            cv2.circle(frame, (int(p[0]), int(p[1])), 3, (0,0,255), -1)
-
-        p1 = ( int(cap_points[0][0]), int(cap_points[0][1]))
-        p2 = ( int(nose_end_point2D[0][0][0]), int(nose_end_point2D[0][0][1]))
-
-        cv2.line(frame, p1, p2, (255,0,0), 2)
 
 
 if __name__ == "__main__":
