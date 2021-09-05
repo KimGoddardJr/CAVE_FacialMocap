@@ -9,8 +9,14 @@ import cv2
 import numpy as np
 import dlib
 
+from datetime import datetime
+fileOutputEnabled = True
+
 class ShapePredictor:
     def __init__(self):
+        #set init time
+        self.initTime=datetime.now()
+
         # identify key landmarks for face direction
         self.numLandmarks = 68
         self.chin = 9
@@ -64,6 +70,21 @@ class ShapePredictor:
                             (self.landmarks.part(self.right_mouth-1).x, self.landmarks.part(self.right_mouth-1).y)      # Right mouth corner
                         ], dtype="double")
 
+        if fileOutputEnabled:
+            #Writes as----> Runtime: nose.x,nose.y chin.x,chin.y ....etc
+            date = self.initTime.strftime("%d-%m-%Y")
+            fileDescription = "6features_" + date + ".txt"
+            file = open(fileDescription, "a")
+
+            file.write(str(datetime.now()-self.initTime))
+            file.write(": ")
+            for p in cap_points:
+                point = str(p[0]) + ","  + str(p[1]) + '\t'
+                file.write(point)
+            
+            file.write('\n')
+            file.close()
+
         #SolvePnP for camera 
         (success, rotation_vector, translation_vector) = cv2.solvePnP(self.model_points, 
                                                                 cap_points, 
@@ -71,8 +92,6 @@ class ShapePredictor:
                                                                 distortion, 
                                                                 flags=cv2.SOLVEPNP_ITERATIVE
                                                             )
-
-
 
         (nose_end_point2D, jacobian) = cv2.projectPoints(np.array([(0.0, 0.0, 1000.0)]), 
                                                                     rotation_vector, 
@@ -82,3 +101,7 @@ class ShapePredictor:
                                                         )
 
         return nose_end_point2D
+
+class MP_ShapePredictor(ShapePredictor):
+    #For implementation of mediapipe landmarks instead
+    pass

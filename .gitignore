@@ -1,3 +1,6 @@
+#Ignore all the text files we're generating for now:
+*.txt
+
 __pycache__/
 
 #Ignore Database File

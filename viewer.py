@@ -49,6 +49,11 @@ class MainWindow(QWidget):
         self.Toggle3DPose.clicked.connect(self.TglPose)
         self.VBL.addWidget(self.Toggle3DPose)
 
+        self.enableFile = QCheckBox("Write to File")
+        self.enableFile.setChecked(True)
+        self.enableFile.setEnabled(False)
+        self.VBL.addWidget(self.enableFile)
+
         #Workers
         self.CameraThread = Camera_Worker()
         if streamEnabled == True:
