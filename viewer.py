@@ -27,12 +27,15 @@ class MainWindow(QWidget):
 
         #uic.loadUi('MainWindow.ui', self)
 
-        self.VBL = QVBoxLayout()
+        self.layout = QHBoxLayout()
 
         self.FeedLabel = QLabel()
-        self.VBL.addWidget(self.FeedLabel)
+        self.layout.addWidget(self.FeedLabel)
 
         #Buttons
+        self.buttonsGB = QGroupBox("Display Options")
+        self.VBL = QVBoxLayout()
+        
         self.CancelBtn = QPushButton("Start/Stop Camera Feed")
         self.CancelBtn.clicked.connect(self.CancelFeed)
         self.VBL.addWidget(self.CancelBtn)
@@ -54,6 +57,9 @@ class MainWindow(QWidget):
         self.enableFile.setEnabled(False)
         self.VBL.addWidget(self.enableFile)
 
+        self.buttonsGB.setLayout(self.VBL)
+        self.layout.addWidget(self.buttonsGB)
+
         #Workers
         self.CameraThread = Camera_Worker()
         if streamEnabled == True:
@@ -61,7 +67,7 @@ class MainWindow(QWidget):
         self.CameraThread.ImageUpdate.connect(self.ImageUpdateSlot)
 
         # Child layout to Window
-        self.setLayout(self.VBL)
+        self.setLayout(self.layout)
         
     def ImageUpdateSlot(self, Image):
         self.FeedLabel.setPixmap(QPixmap.fromImage(Image))
