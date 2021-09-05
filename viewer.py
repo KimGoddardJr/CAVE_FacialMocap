@@ -4,27 +4,31 @@
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from PyQt5 import uic
+from numpy.core.numerictypes import _can_coerce_all
 
 from face_prediction import ShapePredictor
 
 import cv2
 import numpy as np
 
-streamEnabled = True
+#Display option flags
 showFaceTrack = False
 showLandmarks = False
 showNose = False
-showPose = True
+showPose = False
+
 
 class MainWindow(QWidget):
     def __init__(self):
         super(MainWindow, self).__init__()
 
+        self.streamEnabled = True
+        self.mediaEnabled = False
+
         #Window
         title = "OpenCV Face Mocap [WIP] - s5400010"
         self.setWindowTitle(title)
-
+        
         #uic.loadUi('MainWindow.ui', self)
 
         self.layout = QHBoxLayout()
@@ -37,7 +41,7 @@ class MainWindow(QWidget):
         self.VBL = QVBoxLayout()
         
         self.CancelBtn = QPushButton("Start/Stop Camera Feed")
-        self.CancelBtn.clicked.connect(self.CancelFeed)
+        self.CancelBtn.clicked.connect(self.SwitchFeed)
         self.VBL.addWidget(self.CancelBtn)
 
         self.ToggleFaceLoc = QPushButton("Show/Hide Face Track")
@@ -60,11 +64,25 @@ class MainWindow(QWidget):
         self.buttonsGB.setLayout(self.VBL)
         self.layout.addWidget(self.buttonsGB)
 
-        #Workers
-        self.CameraThread = Camera_Worker()
-        if streamEnabled == True:
-            self.CameraThread.start()
-        self.CameraThread.ImageUpdate.connect(self.ImageUpdateSlot)
+        self.CurrentThread = None
+
+        if self.streamEnabled == True:
+            print("Initialise camera feed...")
+            self.CurrentThread = Camera_Worker()
+            self.CurrentThread.start()
+            self.CurrentThread.ImageUpdate.connect(self.ImageUpdateSlot)
+
+        elif self.mediaEnabled == True:
+            print("Searching for media file...")
+            self.CurrentThread = Media_Worker()
+            self.CurrentThread.start()
+            self.CurrentThread.ImageUpdate.connect(self.ImageUpdateSlot)
+
+        else:
+            Image = QPixmap(640,480)
+            Image.fill(Qt.black)
+            self.FeedLabel.setPixmap(Image)
+            print("No input detected.")
 
         # Child layout to Window
         self.setLayout(self.layout)
@@ -72,15 +90,28 @@ class MainWindow(QWidget):
     def ImageUpdateSlot(self, Image):
         self.FeedLabel.setPixmap(QPixmap.fromImage(Image))
 
-    def CancelFeed(self):
-        global streamEnabled
-        streamEnabled = not streamEnabled
+    def SwitchFeed(self):
+        if self.streamEnabled == False and self.mediaEnabled == True:
+            self.CurrentThread.stop()
+            self.CurrentThread = Camera_Worker()
+            self.CurrentThread.ImageUpdate.connect(self.ImageUpdateSlot)
+            self.CurrentThread.start()
 
-        if streamEnabled == True:
-            self.CameraThread.start()
+        elif self.streamEnabled == True and self.mediaEnabled == False:
+            self.CurrentThread.stop()
+            self.CurrentThread = Media_Worker()
+            self.CurrentThread.ImageUpdate.connect(self.ImageUpdateSlot)
+            self.CurrentThread.start()
 
         else:
-            self.CameraThread.stop()
+            Image = QPixmap(640,480)
+            Image.fill(Qt.black)
+            self.FeedLabel.setPixmap(Image)
+            print("Error: No input detected.")
+            return
+
+        self.streamEnabled = not self.streamEnabled
+        self.mediaEnabled = not self.mediaEnabled
 
     def TglFaceLoc(self):
         global showFaceTrack
@@ -94,22 +125,54 @@ class MainWindow(QWidget):
         global showPose
         showPose = not showPose
 
+class Media_Worker(QThread):
+
+    ImageUpdate = pyqtSignal(QImage)
+    Face = ShapePredictor()
+
+    def run(self):
+        self.ThreadActive = True
+        print("Starting media player...")
+        cap = cv2.VideoCapture('video.mp4')
+
+        if (cap.isOpened()== False):
+            print("Error: Could not read video file.")
+
+        while(cap.isOpened() and self.ThreadActive == True):
+            #capture frame by frame
+            _, self.frame = cap.read()
+            if _:
+                RGB = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
+                #Convert to Qt Image
+                ConvertToQtFormat = QImage(RGB.data, RGB.shape[1], RGB.shape[0], QImage.Format_RGB888)
+                Pic = ConvertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
+                self.ImageUpdate.emit(Pic)
+                # Q to Quit
+                if cv2.waitKey(25) & 0xFF == ord('q'):
+                    break
+            else:
+                break
+
+    def stop(self):
+        self.ThreadActive = False
+        self.quit()  
 
 
 class Camera_Worker(QThread):
 
     ImageUpdate = pyqtSignal(QImage)
-
     Face = ShapePredictor()
 
     cap = cv2.VideoCapture(0)
+
     frame = None
     width = 0
     height = 0
 
     def run(self):
         self.ThreadActive = True
-        print("Attempt capture...")
+        print("Starting Camera Feed...")
+
 
         self.getCameraMatrix()
 
@@ -151,7 +214,6 @@ class Camera_Worker(QThread):
                 self.ImageUpdate.emit(Pic)
             
     def stop(self):
-        print("Stop feed...")
         self.ThreadActive = False
         self.quit()
 

@@ -1,7 +1,11 @@
 #Ignore all the text files we're generating for now:
 *.txt
+*.csv
+*.mp4
 
 __pycache__/
+venv/
+.idea/
 
 #Ignore Database File
 *.dat

@@ -10,6 +10,7 @@ import numpy as np
 import dlib
 
 from datetime import datetime
+
 fileOutputEnabled = True
 
 class ShapePredictor:

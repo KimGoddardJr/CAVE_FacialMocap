@@ -12,10 +12,7 @@
 
 from face_prediction import ShapePredictor
 from viewer import MainWindow
-
-from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
 
 import sys
 import mediapipe as mp
