@@ -4,7 +4,6 @@
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from numpy.core.numerictypes import _can_coerce_all
 
 from face_prediction import ShapePredictor
 
@@ -16,6 +15,8 @@ showFaceTrack = False
 showLandmarks = False
 showNose = False
 showPose = False
+
+mediaFilePath = 'video.mp4'
 
 
 class MainWindow(QWidget):
@@ -125,39 +126,6 @@ class MainWindow(QWidget):
         global showPose
         showPose = not showPose
 
-class Media_Worker(QThread):
-
-    ImageUpdate = pyqtSignal(QImage)
-    Face = ShapePredictor()
-
-    def run(self):
-        self.ThreadActive = True
-        print("Starting media player...")
-        cap = cv2.VideoCapture('video.mp4')
-
-        if (cap.isOpened()== False):
-            print("Error: Could not read video file.")
-
-        while(cap.isOpened() and self.ThreadActive == True):
-            #capture frame by frame
-            _, self.frame = cap.read()
-            if _:
-                RGB = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
-                #Convert to Qt Image
-                ConvertToQtFormat = QImage(RGB.data, RGB.shape[1], RGB.shape[0], QImage.Format_RGB888)
-                Pic = ConvertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
-                self.ImageUpdate.emit(Pic)
-                # Q to Quit
-                if cv2.waitKey(25) & 0xFF == ord('q'):
-                    break
-            else:
-                break
-
-    def stop(self):
-        self.ThreadActive = False
-        self.quit()  
-
-
 class Camera_Worker(QThread):
 
     ImageUpdate = pyqtSignal(QImage)
@@ -257,3 +225,51 @@ class Camera_Worker(QThread):
         dist_coeffs = np.zeros((4,1)) # Assuming no lens distortion
 
         return self.Face.getCapPoints(camera_matrix, dist_coeffs)
+
+
+class Media_Worker(Camera_Worker):
+
+    def run(self):
+        self.ThreadActive = True
+        print("Starting media player...")
+        cap = cv2.VideoCapture(mediaFilePath)
+
+        if (cap.isOpened()== False):
+            print("Error: Could not read video file.")
+
+        while(cap.isOpened() and self.ThreadActive == True):
+            #capture frame by frame
+            _, self.frame = cap.read()
+            if _:
+
+                #Get OpenCV Image
+                self.Face.setImgFrame(self.frame)
+                faces = self.Face.getFaces()
+
+                for face in faces:
+                    if showFaceTrack:
+                        self.displayFaceTrack(face, self.frame)
+
+                    if showLandmarks:
+                        landmarks = self.Face.getLandmarks(face)
+                        self.displayLandmarks(landmarks, self.frame)
+
+                    if showPose:
+                        landmarks = self.Face.getLandmarks(face)
+                        end_point2D = self.poseEstimation(self.frame)
+
+                        p1 = ( landmarks.part(34-1).x, landmarks.part(34-1).y) #todo: get nose
+                        p2 = ( int(end_point2D[0][0][0]), int(end_point2D[0][0][1]))
+
+                        cv2.line(self.frame, p1, p2, (0,0,255), 2)
+                        
+                    if showNose:
+                        landmarks = self.Face.getLandmarks(face)
+                        self.displayNose(self.frame, landmarks)
+
+                RGB = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
+                #Convert to Qt Image
+                ConvertToQtFormat = QImage(RGB.data, RGB.shape[1], RGB.shape[0], QImage.Format_RGB888)
+                Pic = ConvertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
+                self.ImageUpdate.emit(Pic)
+
