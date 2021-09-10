@@ -129,7 +129,7 @@ class MainWindow(QWidget):
 class Camera_Worker(QThread):
 
     ImageUpdate = pyqtSignal(QImage)
-    Face = ShapePredictor()
+    Face = SP_68points()
 
     cap = cv2.VideoCapture(0)
 

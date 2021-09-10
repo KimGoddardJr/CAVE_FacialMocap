@@ -15,7 +15,7 @@ from viewer import MainWindow
 from PyQt5.QtWidgets import *
 
 import sys
-import mediapipe as mp
+#import mediapipe as mp
 
 if __name__ == "__main__":
     App = QApplication(sys.argv)
