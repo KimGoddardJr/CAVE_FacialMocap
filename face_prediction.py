@@ -30,15 +30,8 @@ class ShapePredictor:
         self.frame = None
         self.Grey_Image = None
 
-        # 3D model points (taken from [3])
-        self.model_points = np.array([
-                            (0.0, 0.0, 0.0),             # Nose tip
-                            (0.0, -330.0, -65.0),        # Chin
-                            (-225.0, 170.0, -135.0),     # Left eye left corner
-                            (225.0, 170.0, -135.0),      # Right eye right corne
-                            (-150.0, -150.0, -125.0),    # Left Mouth corner
-                            (150.0, -150.0, -125.0)      # Right mouth corner
-                        ])
+
+        self.model_points = np.array([])
 
     def setImgFrame(self, frame):
         self.Grey_Image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -109,6 +102,16 @@ class SP_68points(ShapePredictor):
         self.right_eye = 46
         self.left_mouth = 49
         self.right_mouth = 55
+
+        # 3D model points (taken from [3])
+        self.model_points = np.array([
+                            (0.0, 0.0, 0.0),             # Nose tip
+                            (0.0, -330.0, -65.0),        # Chin
+                            (-225.0, 170.0, -135.0),     # Left eye left corner
+                            (225.0, 170.0, -135.0),      # Right eye right corne
+                            (-150.0, -150.0, -125.0),    # Left Mouth corner
+                            (150.0, -150.0, -125.0)      # Right mouth corner
+                        ])
 
         # shape_predictor_68_face_landmarks.dat file must be in same directory
         self.detector = dlib.get_frontal_face_detector()

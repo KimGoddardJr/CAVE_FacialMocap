@@ -5,7 +5,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 
-from face_prediction import ShapePredictor
+from face_prediction import *
 
 import cv2
 import numpy as np

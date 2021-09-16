@@ -6,11 +6,6 @@
 # https://learnopencv.com/head-pose-estimation-using-opencv-and-dlib/
 # (See P.I. submission for full references for this section ^)
 
-
-#todo:
-# handle if camera not detected - warning
-
-from face_prediction import ShapePredictor
 from viewer import MainWindow
 from PyQt5.QtWidgets import *
 
