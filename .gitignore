@@ -3,11 +3,12 @@
 *.csv
 *.mp4
 
+#Python stuff
 __pycache__/
 venv/
 .idea/
 
-#Ignore Database File
+#Ignore Large Database File
 *.dat
 
 #Ignore for UE4
@@ -25,3 +26,41 @@ Saved
 *.suo
 *.xcodeproj
 *.xcworkspace
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+*.mod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+*.ipa
+
+Plugins/*/Binaries/*
+
+# Builds
+Build/*
+# Don't ignore icon files in Build
+!Build/**/*.ico
+
+# Built data for mapsw
+*_BuiltData.uasset
+Plugins/*/Intermediate/*
