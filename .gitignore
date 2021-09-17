@@ -64,3 +64,5 @@ Build/*
 # Built data for mapsw
 *_BuiltData.uasset
 Plugins/*/Intermediate/*
+
+**.DS_Store

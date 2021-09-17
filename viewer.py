@@ -4,8 +4,11 @@
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+from PyQt5.Qt3DCore import *
+from PyQt5.Qt3DExtras import *
 
 from face_prediction import *
+from mask_geometry import *
 
 import cv2
 import numpy as np
@@ -34,8 +37,11 @@ class MainWindow(QWidget):
 
         self.layout = QHBoxLayout()
 
+        #Placeholders for input/output widgets displayed
         self.FeedLabel = QLabel()
         self.layout.addWidget(self.FeedLabel)
+        self.DisplayLabel = QLabel()
+        self.layout.addWidget(self.DisplayLabel)
 
         #Buttons
         self.buttonsGB = QGroupBox("Display Options")
@@ -84,6 +90,8 @@ class MainWindow(QWidget):
             Image.fill(Qt.black)
             self.FeedLabel.setPixmap(Image)
             print("No input detected.")
+
+        self.mask_scene 
 
         # Child layout to Window
         self.setLayout(self.layout)
