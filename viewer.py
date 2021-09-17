@@ -7,8 +7,8 @@ from PyQt5.QtCore import *
 from PyQt5.Qt3DCore import *
 from PyQt5.Qt3DExtras import *
 
+from mask_geometry import demo_Scene
 from face_prediction import *
-from mask_geometry import *
 
 import cv2
 import numpy as np
@@ -20,7 +20,6 @@ showNose = False
 showPose = False
 
 mediaFilePath = 'video.mp4'
-
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -40,8 +39,22 @@ class MainWindow(QWidget):
         #Placeholders for input/output widgets displayed
         self.FeedLabel = QLabel()
         self.layout.addWidget(self.FeedLabel)
-        self.DisplayLabel = QLabel()
-        self.layout.addWidget(self.DisplayLabel)
+
+
+        #3D Window to Widget
+        view = Qt3DWindow()
+        view.defaultFrameGraph().setClearColor(QColor("#4d4d4f"))
+        container = QWidget.createWindowContainer(view)
+        self.layout.addWidget(container)
+        demo = demo_Scene()
+        scene_3d = demo.createScene()
+        # Camera
+        camera = view.camera()
+        camera.lens().setPerspectiveProjection(45.0, 16.0/9.0, 0.1, 1000.0)
+        camera.setPosition(QVector3D(0, 0, 40.0))
+        camera.setViewCenter(QVector3D(0, 0, 0))
+        view.setRootEntity(scene_3d)
+        view.show()
 
         #Buttons
         self.buttonsGB = QGroupBox("Display Options")
@@ -90,8 +103,6 @@ class MainWindow(QWidget):
             Image.fill(Qt.black)
             self.FeedLabel.setPixmap(Image)
             print("No input detected.")
-
-        self.mask_scene 
 
         # Child layout to Window
         self.setLayout(self.layout)
@@ -148,7 +159,6 @@ class Camera_Worker(QThread):
     def run(self):
         self.ThreadActive = True
         print("Starting Camera Feed...")
-
 
         self.getCameraMatrix()
 
