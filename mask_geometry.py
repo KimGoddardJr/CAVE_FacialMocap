@@ -73,7 +73,7 @@ class demo_Scene():
         #sphere
         self.mesh = QMesh()
         url = QUrl()
-        url.setScheme("file");
+        url.setScheme("file")
         url.setPath("data/mp_facegeometry2.obj")
         self.mesh.setSource(url)
 
@@ -152,6 +152,8 @@ def read_pts(filename):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     view = Qt3DWindow()
+
+
     demo = demo_Scene()
     scene_3d = demo.createScene()
 
