@@ -1,5 +1,4 @@
-# [1] Qt5/OpenCV window code modified from:
-# https://www.codepile.net/pile/ey9KAnxn
+# Qt5/OpenCV window code modified from: https://www.codepile.net/pile/ey9KAnxn
 
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -7,11 +6,11 @@ from PyQt5.QtCore import *
 from PyQt5.Qt3DCore import *
 from PyQt5.Qt3DExtras import *
 
-from mask_geometry import demo_Scene
-from face_prediction import *
-
 import cv2
 import numpy as np
+
+from mask_geometry import demo_Scene
+from face_prediction import *
 
 #Display option flags
 showFaceTrack = False
@@ -25,27 +24,17 @@ class MainWindow(QWidget):
     def __init__(self):
         super(MainWindow, self).__init__()
 
-        self.streamEnabled = True
+        self.streamEnabled = False
         self.mediaEnabled = False
 
         #Window
         title = "OpenCV Face Mocap [WIP] - s5400010"
         self.setWindowTitle(title)
-        
-        #uic.loadUi('MainWindow.ui', self)
-
-        self.layout = QHBoxLayout()
-
-        #Placeholders for input/output widgets displayed
-        self.FeedLabel = QLabel()
-        self.layout.addWidget(self.FeedLabel)
-
 
         #3D Window to Widget
         view = Qt3DWindow()
         view.defaultFrameGraph().setClearColor(QColor("#4d4d4f"))
-        container = QWidget.createWindowContainer(view)
-        self.layout.addWidget(container)
+        self.container = QWidget.createWindowContainer(view)
         demo = demo_Scene()
         scene_3d = demo.createScene()
         # Camera
@@ -56,9 +45,51 @@ class MainWindow(QWidget):
         view.setRootEntity(scene_3d)
         view.show()
 
+        self.SetUpUI()
+
+        self.CurrentThread = None
+
+        if self.streamEnabled == True:
+            print("Initialise camera feed...")
+            self.CurrentThread = Camera_Worker()
+            self.CurrentThread.start()
+            self.CurrentThread.ImageUpdate.connect(self.ImageUpdateSlot)
+
+        elif self.mediaEnabled == True:
+            print("Searching for media file...")
+            self.CurrentThread = Media_Worker()
+            self.CurrentThread.start()
+            self.CurrentThread.ImageUpdate.connect(self.ImageUpdateSlot)
+
+        else:
+            Image = QPixmap(640,480)
+            Image.fill(Qt.black)
+            self.FeedLabel.setPixmap(Image)
+            print("No input detected.")
+
+        # Child layout to Window
+        self.setLayout(self.layout)
+
+    def SetUpUI(self):
+        self.layout = QHBoxLayout()
+        self.layout.addWidget(self.container)
+
+        #Placeholders for input/output widgets displayed
+        self.FeedLabel = QLabel()
+        self.layout.addWidget(self.FeedLabel)
+
         #Buttons
         self.buttonsGB = QGroupBox("Display Options")
         self.VBL = QVBoxLayout()
+
+        self.csLabel = QLabel()
+        self.VBL.addWidget(self.csLabel)
+        self.csLabel.setText("Face Input Method:")
+
+        self.camSelect = QComboBox()
+        self.camSelect.addItems(["None", "Webcam", "Media"])
+        self.camSelect.currentIndexChanged.connect(self.SelectInput)
+        self.VBL.addWidget(self.camSelect)
         
         self.CancelBtn = QPushButton("Start/Stop Camera Feed")
         self.CancelBtn.clicked.connect(self.SwitchFeed)
@@ -83,33 +114,13 @@ class MainWindow(QWidget):
 
         self.buttonsGB.setLayout(self.VBL)
         self.layout.addWidget(self.buttonsGB)
-
-        self.CurrentThread = None
-
-        if self.streamEnabled == True:
-            print("Initialise camera feed...")
-            self.CurrentThread = Camera_Worker()
-            self.CurrentThread.start()
-            self.CurrentThread.ImageUpdate.connect(self.ImageUpdateSlot)
-
-        elif self.mediaEnabled == True:
-            print("Searching for media file...")
-            self.CurrentThread = Media_Worker()
-            self.CurrentThread.start()
-            self.CurrentThread.ImageUpdate.connect(self.ImageUpdateSlot)
-
-        else:
-            Image = QPixmap(640,480)
-            Image.fill(Qt.black)
-            self.FeedLabel.setPixmap(Image)
-            print("No input detected.")
-
-        # Child layout to Window
-        self.setLayout(self.layout)
         
     def ImageUpdateSlot(self, Image):
         self.FeedLabel.setPixmap(QPixmap.fromImage(Image))
 
+    def SelectInput(self):
+        print("Input Changed")
+    
     def SwitchFeed(self):
         if self.streamEnabled == False and self.mediaEnabled == True:
             self.CurrentThread.stop()

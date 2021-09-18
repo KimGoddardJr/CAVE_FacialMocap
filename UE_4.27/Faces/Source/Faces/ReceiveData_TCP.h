@@ -5,6 +5,10 @@
 #include "UObject/Interface.h"
 #include "ReceiveData_TCP.generated.h"
 
+#include "Sockets.h"
+#include "SocketSubsystem.h"
+#include "Networking.h"
+
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class UReceiveData_TCP : public UInterface

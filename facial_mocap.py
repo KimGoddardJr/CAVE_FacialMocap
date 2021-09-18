@@ -1,16 +1,21 @@
-# [1] Qt5/OpenCV window code modified from:
-# https://www.codepile.net/pile/ey9KAnxn
-# [2] Face landmark detection code modified from:
-# https://pysource.com/2019/03/12/face-landmarks-detection-opencv-with-python/
-# [3] Head pose estimation code modified from:
-# https://learnopencv.com/head-pose-estimation-using-opencv-and-dlib/
-# (See P.I. submission for full references for this section ^)
+"""
+MSc Project - Georgie Challis (s5400010), 2021 
+Facial animation from webcam data to Unreal Engine.
+
+Dependencies:
+* OpenCV
+* PyQt5 and PyQt3D 
+* dlib
+* eos 3D Morphable Face Model fitting library
+
+See individual modules for code references and resources
+See written report for academic references and theory
+"""
 
 from viewer import MainWindow
 from PyQt5.QtWidgets import *
 
 import sys
-#import mediapipe as mp
 
 if __name__ == "__main__":
     App = QApplication(sys.argv)

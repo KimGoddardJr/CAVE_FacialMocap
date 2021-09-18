@@ -1,34 +1,32 @@
-
-#One Euro Filter implementation by Jaan Tollander de Balsch on GitHub
-#https://github.com/jaantollander/OneEuroFilter/blob/master/python/one_euro_filter.py
+# One Euro Filter implementation by Jaan Tollander de Balsch on GitHub
+# https://github.com/jaantollander/OneEuroFilter/blob/master/python/one_euro_filter.py
 
 from math import pi
-import cv2
+
 
 class Filter():
     def __init__():
         pass
 
+
 class Filter_1e(Filter):
     """ 
     One euro filter 
     """
-    
+
     def __init__(self):
         pass
-    
+
     def smoothing_factor(t_e, cutoff):
         r = 2 * pi * cutoff * t_e
         return r / (r + 1)
 
-
     def exponential_smoothing(a, x, x_prev):
         return a * x + (1 - a) * x_prev
 
-
     class OneEuroFilter:
         def __init__(self, t0, x0, dx0=0.0, min_cutoff=1.0, beta=0.0,
-                    d_cutoff=1.0):
+                     d_cutoff=1.0):
             """Initialize the one euro filter."""
             # The parameters.
             self.min_cutoff = float(min_cutoff)

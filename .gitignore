@@ -8,8 +8,9 @@ __pycache__/
 venv/
 .idea/
 
-#Ignore Large Database File
+#Ignore Large Database Files
 *.dat
+data/*
 
 #Ignore for UE4
 Binaries
