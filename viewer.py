@@ -8,8 +8,7 @@ from PyQt5.Qt3DExtras import *
 
 import numpy as np
 
-from mask_geometry import demo_Scene
-from face_prediction import *
+from mask_geometry import *
 from input_stream import *
 
 #Display option flags
@@ -29,19 +28,8 @@ class MainWindow(QWidget):
         title = "OpenCV Face Mocap [WIP] - s5400010"
         self.setWindowTitle(title)
 
-        #3D Window to Widget
-        view = Qt3DWindow()
-        view.defaultFrameGraph().setClearColor(QColor("#4d4d4f"))
-        self.container = QWidget.createWindowContainer(view)
-        demo = demo_Scene()
-        scene_3d = demo.createScene()
-        # Camera
-        camera = view.camera()
-        camera.lens().setPerspectiveProjection(45.0, 16.0/9.0, 0.1, 1000.0)
-        camera.setPosition(QVector3D(0, 0, 40.0))
-        camera.setViewCenter(QVector3D(0, 0, 0))
-        view.setRootEntity(scene_3d)
-        view.show()
+        self.layout = QHBoxLayout()
+        #self.layout.addWidget(container)
 
         self.SetUpUI()
 
@@ -68,9 +56,22 @@ class MainWindow(QWidget):
         # Child layout to Window
         self.setLayout(self.layout)
 
+    def Show(self):
+        #3D Window to Widget
+        self.view = Qt3DWindow()
+        scene = demo_Scene()
+        demo = scene.createScene()
+        # Camera
+        camera = self.view.camera()
+        camera.lens().setPerspectiveProjection(45.0, 16.0/9.0, 0.1, 1000.0)
+        camera.setPosition(QVector3D(0, 0, 40.0))
+        camera.setViewCenter(QVector3D(0, 0, 0))
+        self.view.setRootEntity(demo)
+        self.view.defaultFrameGraph().setClearColor(QColor("#4d4d4f"))
+        self.container = self.createWindowContainer(self.view)
+        self.container.show()
+
     def SetUpUI(self):
-        self.layout = QHBoxLayout()
-        self.layout.addWidget(self.container)
 
         #Placeholders for input/output widgets displayed
         self.FeedLabel = QLabel()
@@ -94,7 +95,7 @@ class MainWindow(QWidget):
         
         self.CancelBtn = QPushButton("Start/Stop Camera Feed")
         self.CancelBtn.clicked.connect(self.SwitchFeed)
-        self.VBL.addWidget(self.CancelBtn)
+        #self.VBL.addWidget(self.CancelBtn)
 
         self.ToggleFaceLoc = QPushButton("Show/Hide Face Track")
         self.ToggleFaceLoc.clicked.connect(self.TglFaceLoc)
@@ -151,7 +152,6 @@ class MainWindow(QWidget):
         self.CurrentThread.ImageUpdate.connect(self.ImageUpdateSlot)
         self.CurrentThread.start()
           
-    
     def SwitchFeed(self):
         pass
 
@@ -172,6 +172,3 @@ class MainWindow(QWidget):
             global showPose
             showPose = not showPose
             self.CurrentThread.setSP(showPose)
-
-
-

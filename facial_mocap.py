@@ -17,8 +17,16 @@ from PyQt5.QtWidgets import *
 
 import sys
 
+bShowGeomPreview = True
+
 if __name__ == "__main__":
+    import sys
+
     App = QApplication(sys.argv)
     Root = MainWindow()
+    #Main GUI:
     Root.show()
-    sys.exit(App.exec())
+    #Preview geometry window
+    if bShowGeomPreview:
+        Root.Show()
+    sys.exit(App.exec_())

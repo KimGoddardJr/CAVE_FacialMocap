@@ -4,7 +4,6 @@ Python port of Qt 3D: Simple C++ Example code
 https://doc.qt.io/qt-5.10/qt3d-simple-cpp-example.html
 """
 import eos
-import sys
 from PyQt5 import QtCore
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -64,11 +63,11 @@ class OrbitTransformController(QObject):
     radius = pyqtProperty(float, fget=getRadius, fset=setRadius)
     angle = pyqtProperty(float, fget=getAngle, fset=setAngle)
 
+
 class demo_Scene():
     def __init__(self):
         self.rootEntity = QEntity()
         self.material = QPhongMaterial(self.rootEntity)
-        self.childEntity = QEntity(self.rootEntity)
 
         #sphere
         self.mesh = QMesh()
@@ -81,20 +80,10 @@ class demo_Scene():
         objectTransform = QTransform()
         controller = OrbitTransformController(objectTransform)
         controller.setTarget(objectTransform)
-        controller.setRadius(10)
 
-        objectRotateTransformAnimation = QPropertyAnimation(objectTransform)
-        objectRotateTransformAnimation.setTargetObject(controller)
-        objectRotateTransformAnimation.setPropertyName(b'angle')
-        objectRotateTransformAnimation.setStartValue(0)
-        objectRotateTransformAnimation.setEndValue(360)
-        objectRotateTransformAnimation.setDuration(10000)
-        objectRotateTransformAnimation.setLoopCount(-1)
-        #objectRotateTransformAnimation.start()
-
-        self.childEntity.addComponent(self.mesh)
-        self.childEntity.addComponent(objectTransform)
-        self.childEntity.addComponent(self.material)
+        self.rootEntity.addComponent(self.mesh)
+        self.rootEntity.addComponent(objectTransform)
+        self.rootEntity.addComponent(self.material)
 
         return self.rootEntity
 
@@ -148,28 +137,44 @@ def read_pts(filename):
 
     return landmarks
 
+
+class MainWindow(QWidget):
+    def __init__(self):
+        super(MainWindow, self).__init__()
+        title = "OpenCV Face Mocap [WIP] - s5400010"
+        self.setWindowTitle(title)
+
+        lay = QVBoxLayout(self)
+        self.view = Qt3DWindow()
+        container = QWidget.createWindowContainer(self.view)
+        lay.addWidget(container)
+        scene = demo_Scene()
+        scene.createScene()
+        self.rootEntity = scene
+        cameraEntity = self.view.camera()
+        camController = QFirstPersonCameraController(scene.rootEntity)
+        camController.setCamera(cameraEntity)
+        self.view.setRootEntity(scene.rootEntity)
+
 #Run module on its own to test widget
 if __name__ == "__main__":
+    import sys
     app = QApplication(sys.argv)
-    view = Qt3DWindow()
+    Root = MainWindow()
 
+    view = Qt3DWindow()
 
     demo = demo_Scene()
     scene_3d = demo.createScene()
-
     # Camera
     camera = view.camera()
     camera.lens().setPerspectiveProjection(45.0, 16.0/9.0, 0.1, 1000.0)
-    camera.setPosition(QVector3D(0, 0, 40.0))
+    camera.setPosition(QVector3D(0, 0, 50.0))
     camera.setViewCenter(QVector3D(0, 0, 0))
-
-    # For camera controls
-    camController = QOrbitCameraController(scene_3d)
-    camController.setLinearSpeed( 50.0 )
-    camController.setLookSpeed( 180.0 )
-    camController.setCamera(camera)
 
     view.setRootEntity(scene_3d)
     view.show()
 
     sys.exit(app.exec_())
+    
+

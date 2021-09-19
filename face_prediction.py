@@ -10,7 +10,7 @@ import numpy as np
 
 from datetime import datetime
 
-fileOutputEnabled = False
+fileOutputEnabled = True
 
 class ShapePredictor:
     def __init__(self):
@@ -19,16 +19,16 @@ class ShapePredictor:
 
         # identify key landmarks for face direction
         self.numLandmarks = 0
-        self.chin, self.nose, self.left_eye, self.right_eye, self.left_mouth, self.right_mouth = 0
         self.landmarks = None
 
         self.detector = None
         self.predictor = None
+        self.cap_points = None
 
         # Camera
         self.frame = None
         self.Grey_Image = None
-
+        self.cap_points = np.array([])
         self.model_points = np.array([])
 
     def setImgFrame(self, frame):
@@ -42,22 +42,21 @@ class ShapePredictor:
     def getLandmarks(self, face):
         #Get Facial Landmarks
         self.landmarks = self.predictor(self.Grey_Image, face)
+        self.writePts()
         return self.landmarks
 
     def getCapPoints(self, camera_matrix, distortion):
-
-        cap_points = np.array([
-                            (self.landmarks.part(self.nose-1).x, self.landmarks.part(self.nose-1).y),
-                            (self.landmarks.part(self.chin-1).x, self.landmarks.part(self.chin-1).y),     # Chin
-                            (self.landmarks.part(self.left_eye-1).x, self.landmarks.part(self.left_eye-1).y),     # Left eye left corner
-                            (self.landmarks.part(self.right_eye-1).x, self.landmarks.part(self.right_eye-1).y),     # Right eye right corne
-                            (self.landmarks.part(self.left_mouth-1).x, self.landmarks.part(self.left_mouth-1).y),     # Left Mouth corner
-                            (self.landmarks.part(self.right_mouth-1).x, self.landmarks.part(self.right_mouth-1).y)      # Right mouth corner
-                        ], dtype="double")
-
+        self.cap_points = np.array([
+            (self.landmarks.part(self.nose-1).x, self.landmarks.part(self.nose-1).y),
+            (self.landmarks.part(self.chin-1).x, self.landmarks.part(self.chin-1).y),     # Chin
+            (self.landmarks.part(self.left_eye-1).x, self.landmarks.part(self.left_eye-1).y),     # Left eye left corner
+            (self.landmarks.part(self.right_eye-1).x, self.landmarks.part(self.right_eye-1).y),     # Right eye right corne
+            (self.landmarks.part(self.left_mouth-1).x, self.landmarks.part(self.left_mouth-1).y),     # Left Mouth corner
+            (self.landmarks.part(self.right_mouth-1).x, self.landmarks.part(self.right_mouth-1).y)      # Right mouth corner
+        ], dtype="double")
         #SolvePnP for camera
         (success, rotation_vector, translation_vector) = cv2.solvePnP(self.model_points,
-                                                                cap_points,
+                                                                self.cap_points,
                                                                 camera_matrix,
                                                                 distortion,
                                                                 flags=cv2.SOLVEPNP_ITERATIVE
@@ -72,24 +71,28 @@ class ShapePredictor:
 
         return nose_end_point2D
 
-    def writePts():
+    def writePts(self):
         if fileOutputEnabled:
             #Writes as----> Run-time: nose.x,nose.y chin.x,chin.y ....etc
             date = self.initTime.strftime("%d-%m-%Y")
-            fileDescription = "6features_" + date + ".csv"
-            file = open(fileDescription, "a")
+            fileDescription = "landmarks_" + date + ".pts"
+            file = open(fileDescription, "w")
 
-            file.write(str(datetime.now()-self.initTime))
-            file.write(": ")
-            for p in cap_points:
-                point = str(p[0]) + ","  + str(p[1]) + '\t'
+            #file.write(str(datetime.now()-self.initTime))
+            file.write("version: 1\n")
+            file.write("n_points: %d\n" %self.numLandmarks)
+            file.write('{\n')
+            for i in range (0, self.numLandmarks):
+                x = self.landmarks.part(i).x
+                y = self.landmarks.part(i).y
+                point = str(x) + " "  + str(y) + '\n'
                 file.write(point)
-
-            file.write('\n')
+            file.write('}\n')
             file.close()
 
 class SP_68points(ShapePredictor):
     def __init__(self):
+        super().__init__()
         #set init time
         self.initTime=datetime.now()
 
@@ -110,7 +113,7 @@ class SP_68points(ShapePredictor):
                             (225.0, 170.0, -135.0),      # Right eye right corne
                             (-150.0, -150.0, -125.0),    # Left Mouth corner
                             (150.0, -150.0, -125.0)      # Right mouth corner
-        ])
+        ])                                                                                                                                                                                                                                                                                                                       
 
         # shape_predictor_68_face_landmarks.dat file must be in same directory
         self.detector = dlib.get_frontal_face_detector()
@@ -118,6 +121,7 @@ class SP_68points(ShapePredictor):
 
 class SP_68points(ShapePredictor):
     def __init__(self):
+        super().__init__()
         #set init time
         self.initTime=datetime.now()
 
