@@ -23,6 +23,7 @@ class MainWindow(QWidget):
 
         self.streamEnabled = False
         self.mediaEnabled = False
+        self.CurrentThread = None
 
         #Window
         title = "OpenCV Face Mocap [WIP] - s5400010"
@@ -33,28 +34,14 @@ class MainWindow(QWidget):
 
         self.SetUpUI()
 
-        self.CurrentThread = None
-
-        if self.streamEnabled == True:
-            print("Initialise camera feed...")
-            self.CurrentThread = Camera_Worker()
-            self.CurrentThread.start()
-            self.CurrentThread.ImageUpdate.connect(self.ImageUpdateSlot)
-
-        elif self.mediaEnabled == True:
-            print("Searching for media file...")
-            self.CurrentThread = Media_Worker()
-            self.CurrentThread.start()
-            self.CurrentThread.ImageUpdate.connect(self.ImageUpdateSlot)
-
-        else:
-            Image = QPixmap(640,480)
-            Image.fill(Qt.black)
-            self.FeedLabel.setPixmap(Image)
-            print("No input detected.")
+        Image = QPixmap(640,480)
+        Image.fill(Qt.black)
+        self.FeedLabel.setPixmap(Image)
 
         # Child layout to Window
         self.setLayout(self.layout)
+
+
 
     def Show(self):
         #3D Window to Widget
@@ -110,8 +97,9 @@ class MainWindow(QWidget):
         self.VBL.addWidget(self.Toggle3DPose)
 
         self.enableFile = QCheckBox("Write to File")
-        self.enableFile.setChecked(True)
-        self.enableFile.setEnabled(False)
+        self.enableFile.setChecked(False)
+        self.enableFile.setCheckable(False)
+        self.enableFile.toggled.connect(self.TglFile)
         self.VBL.addWidget(self.enableFile)
 
         self.buttonsGB.setLayout(self.VBL)
@@ -119,6 +107,10 @@ class MainWindow(QWidget):
         
     def ImageUpdateSlot(self, Image):
         self.FeedLabel.setPixmap(QPixmap.fromImage(Image))
+
+    def TglFile(self):
+        itemClicked = self.sender()
+        self.CurrentThread.setFileExport(itemClicked.checkState())
 
     def SelectInput(self):
         newIndex = self.camSelect.currentIndex()
@@ -129,24 +121,33 @@ class MainWindow(QWidget):
             self.streamEnabled = False
             self.mediaEnabled = True
             self.CurrentThread = Media_Worker()
+            #Pass on button settings from GUI
             self.CurrentThread.setSFT(showFaceTrack)
             self.CurrentThread.setSL(showLandmarks)
             self.CurrentThread.setSP(showPose)
+            #Enable checkboxes
+            self.enableFile.setCheckable(True)
         elif newIndex == 1:
             print("Input: Webcam")
             self.streamEnabled = True
             self.mediaEnabled = False
             self.CurrentThread = Camera_Worker()
+            #Pass on button settings from GUI
             self.CurrentThread.setSFT(showFaceTrack)
             self.CurrentThread.setSL(showLandmarks)
             self.CurrentThread.setSP(showPose)
+            #Enable Checkboxes
+            self.enableFile.setCheckable(True)
         else:
             print("Input: None") 
             self.streamEnabled = False
             self.mediaEnabled = False
+            #Set black image
             Image = QPixmap(560,480)
             Image.fill(Qt.black)
             self.FeedLabel.setPixmap(Image)
+            #Disable checkbox
+            self.enableFile.setCheckable(False)
             return
 
         self.CurrentThread.ImageUpdate.connect(self.ImageUpdateSlot)

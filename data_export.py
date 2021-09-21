@@ -11,7 +11,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.listen()
     conn, addr = s.accept()
     with conn:
-        print('Connected by', addr)
+        print('Connected to', addr)
         while True:
             str = "hello!"
             conn.send(str.encode())

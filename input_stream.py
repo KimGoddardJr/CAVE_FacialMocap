@@ -83,6 +83,9 @@ class Camera_Worker(QThread):
     def setSP(self, bFlag):
         self.showPose = bFlag
 
+    def setFileExport(self, bFlag):
+        pass
+
     def displayNose(self, frame, landmarks):
         x = landmarks.part(34-1).x #todo: get nose
         y = landmarks.part(34-1).y
