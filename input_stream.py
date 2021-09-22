@@ -7,11 +7,15 @@ from PyQt5.Qt3DExtras import *
 from face_prediction import *
 
 
+class Idle(QThread):
+    pass
+
 class Camera_Worker(QThread):
 
     ImageUpdate = pyqtSignal(QImage)
     Face = SP_68points()
 
+    #Get feed from camera 0
     cap = cv2.VideoCapture(0)
 
     frame = None
@@ -50,7 +54,7 @@ class Camera_Worker(QThread):
                         landmarks = self.Face.getLandmarks(face)
                         end_point2D = self.poseEstimation(self.frame)
 
-                        p1 = ( landmarks.part(34-1).x, landmarks.part(34-1).y) #todo: get nose
+                        p1 = ( landmarks.part(34-1).x, landmarks.part(34-1).y) #todo: get nose properly
                         p2 = ( int(end_point2D[0][0][0]), int(end_point2D[0][0][1]))
 
                         cv2.line(self.frame, p1, p2, (0,0,255), 2)
@@ -181,3 +185,4 @@ class Media_Worker(Camera_Worker):
     def stop(self):
         self.ThreadActive = False
         self.quit()
+

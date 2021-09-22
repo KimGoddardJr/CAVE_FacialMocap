@@ -90,6 +90,11 @@ class ShapePredictor:
             file.write('}\n')
             file.close()
 
+    def SaveCropped(self):
+        bbox_scale = 1.05
+        #todo face_img = img[]
+
+
 class SP_68points(ShapePredictor):
     def __init__(self):
         super().__init__()

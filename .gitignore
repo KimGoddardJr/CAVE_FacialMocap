@@ -1,7 +1,11 @@
+#Don't need 8k textures
+UE_4.27/Faces/Content/MetaHumans/Common/Models/PuffinTexture-8k/*
+
 #Ignore all the text files we're generating for now:
 *.txt
 *.csv
 *.mp4
+*.pts
 
 #Python stuff
 __pycache__/

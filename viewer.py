@@ -24,6 +24,7 @@ class MainWindow(QWidget):
         self.streamEnabled = False
         self.mediaEnabled = False
         self.CurrentThread = None
+        self.DataRecording = False
 
         #Window
         title = "OpenCV Face Mocap [WIP] - s5400010"
@@ -79,10 +80,6 @@ class MainWindow(QWidget):
 
         verticalSpacer = QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)
         self.VBL.addItem(verticalSpacer)
-        
-        self.CancelBtn = QPushButton("Start/Stop Camera Feed")
-        self.CancelBtn.clicked.connect(self.SwitchFeed)
-        #self.VBL.addWidget(self.CancelBtn)
 
         self.ToggleFaceLoc = QPushButton("Show/Hide Face Track")
         self.ToggleFaceLoc.clicked.connect(self.TglFaceLoc)
@@ -96,17 +93,44 @@ class MainWindow(QWidget):
         self.Toggle3DPose.clicked.connect(self.TglPose)
         self.VBL.addWidget(self.Toggle3DPose)
 
+        verticalSpacer = QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.VBL.addItem(verticalSpacer)
+
+        #Change path to media file:
+        self.pathLabel = QLabel("Path to media file:")
+        self.VBL.addWidget(self.pathLabel)
+
+        self.pathEdit = QLineEdit("./data/video.mp4")
+        self.pathEdit.setReadOnly(True)
+        self.VBL.addWidget(self.pathEdit)
+
+        verticalSpacer = QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.VBL.addItem(verticalSpacer)
+
+        self.CancelBtn = QPushButton("Start/Stop Data Record")
+        self.CancelBtn.clicked.connect(self.TglDataExport)
+        self.VBL.addWidget(self.CancelBtn)
+
         self.enableFile = QCheckBox("Write to File")
         self.enableFile.setChecked(False)
         self.enableFile.setCheckable(False)
         self.enableFile.toggled.connect(self.TglFile)
         self.VBL.addWidget(self.enableFile)
 
+        self.enableImg = QCheckBox("Write to Image")
+        self.enableImg.setChecked(False)
+        self.enableImg.setCheckable(False)
+        self.enableImg.toggled.connect(self.TglImage)
+        self.VBL.addWidget(self.enableImg)
+
         self.buttonsGB.setLayout(self.VBL)
         self.layout.addWidget(self.buttonsGB)
         
     def ImageUpdateSlot(self, Image):
         self.FeedLabel.setPixmap(QPixmap.fromImage(Image))
+
+    def TglImage(self):
+        pass
 
     def TglFile(self):
         itemClicked = self.sender()
@@ -116,6 +140,7 @@ class MainWindow(QWidget):
         newIndex = self.camSelect.currentIndex()
         if self.streamEnabled or self.mediaEnabled == True:
             self.CurrentThread.stop()
+            print("Stopped running thread....")
         if newIndex == 2:
             print("Input: Media")
             self.streamEnabled = False
@@ -153,7 +178,12 @@ class MainWindow(QWidget):
         self.CurrentThread.ImageUpdate.connect(self.ImageUpdateSlot)
         self.CurrentThread.start()
           
-    def SwitchFeed(self):
+    def TglDataExport(self):
+        print("Exporting data...")
+        self.DataRecording = not self.DataRecording
+        #todo: If true, start recording
+
+        #todo: If false, stop recording
         pass
 
     def TglFaceLoc(self):
@@ -173,3 +203,5 @@ class MainWindow(QWidget):
             global showPose
             showPose = not showPose
             self.CurrentThread.setSP(showPose)
+    
+

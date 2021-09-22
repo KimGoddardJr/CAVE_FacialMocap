@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import *
 
 import sys
 
-bShowGeomPreview = True
+bShowGeomPreview = False
 
 if __name__ == "__main__":
     import sys
