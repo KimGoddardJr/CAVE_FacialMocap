@@ -7,10 +7,14 @@ import eos
 from PyQt5 import QtCore
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from PyQt5.Qt3DCore import *
-from PyQt5.Qt3DExtras import *
 from PyQt5.QtWidgets import *
-from PyQt5.Qt3DRender import *
+
+try:
+    from PyQt5.Qt3DCore import *
+    from PyQt5.Qt3DExtras import *
+    from PyQt5.Qt3DRender import *
+except:
+    print("PyQt3D not found.")
 
 
 class OrbitTransformController(QObject):

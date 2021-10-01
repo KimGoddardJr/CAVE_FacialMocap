@@ -3,13 +3,18 @@
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from PyQt5.Qt3DCore import *
-from PyQt5.Qt3DExtras import *
+
+try:
+    from PyQt5.Qt3DCore import *
+    from PyQt5.Qt3DExtras import *
+except:
+    print("PyQt3D not found")
 
 import numpy as np
 
 from mask_geometry import *
 from input_stream import *
+import data_export
 
 #Display option flags
 showFaceTrack = False
@@ -41,7 +46,6 @@ class MainWindow(QWidget):
 
         # Child layout to Window
         self.setLayout(self.layout)
-
 
 
     def Show(self):
@@ -78,7 +82,7 @@ class MainWindow(QWidget):
         self.camSelect.currentIndexChanged.connect(self.SelectInput)
         self.VBL.addWidget(self.camSelect)
 
-        verticalSpacer = QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        verticalSpacer = QSpacerItem(10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding)
         self.VBL.addItem(verticalSpacer)
 
         self.ToggleFaceLoc = QPushButton("Show/Hide Face Track")
@@ -102,12 +106,13 @@ class MainWindow(QWidget):
 
         self.pathEdit = QLineEdit("./data/video.mp4")
         self.pathEdit.setReadOnly(True)
+        self.pathEdit.setEnabled(False)
         self.VBL.addWidget(self.pathEdit)
 
         verticalSpacer = QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)
         self.VBL.addItem(verticalSpacer)
 
-        self.CancelBtn = QPushButton("Start/Stop Data Record")
+        self.CancelBtn = QPushButton("Start Data Record")
         self.CancelBtn.clicked.connect(self.TglDataExport)
         self.VBL.addWidget(self.CancelBtn)
 
@@ -130,7 +135,8 @@ class MainWindow(QWidget):
         self.FeedLabel.setPixmap(QPixmap.fromImage(Image))
 
     def TglImage(self):
-        pass
+        itemClicked = self.sender()
+        self.CurrentThread.setFileExport(itemClicked.checkState())
 
     def TglFile(self):
         itemClicked = self.sender()
@@ -141,7 +147,7 @@ class MainWindow(QWidget):
         if self.streamEnabled or self.mediaEnabled == True:
             self.CurrentThread.stop()
             print("Stopped running thread....")
-        if newIndex == 2:
+        if newIndex == 2: #play from file
             print("Input: Media")
             self.streamEnabled = False
             self.mediaEnabled = True
@@ -152,6 +158,8 @@ class MainWindow(QWidget):
             self.CurrentThread.setSP(showPose)
             #Enable checkboxes
             self.enableFile.setCheckable(True)
+            self.enableImg.setCheckable(True)
+            self.pathEdit.setEnabled(True)
         elif newIndex == 1:
             print("Input: Webcam")
             self.streamEnabled = True
@@ -163,16 +171,17 @@ class MainWindow(QWidget):
             self.CurrentThread.setSP(showPose)
             #Enable Checkboxes
             self.enableFile.setCheckable(True)
+            self.enableImg.setCheckable(True)
+            self.pathEdit.setEnabled(False)
         else:
             print("Input: None") 
             self.streamEnabled = False
             self.mediaEnabled = False
-            #Set black image
-            Image = QPixmap(560,480)
-            Image.fill(Qt.black)
-            self.FeedLabel.setPixmap(Image)
+
             #Disable checkbox
             self.enableFile.setCheckable(False)
+            self.enableImg.setCheckable(False)
+            self.pathEdit.setEnabled(False)
             return
 
         self.CurrentThread.ImageUpdate.connect(self.ImageUpdateSlot)
@@ -182,7 +191,10 @@ class MainWindow(QWidget):
         print("Exporting data...")
         self.DataRecording = not self.DataRecording
         #todo: If true, start recording
-
+        if self.DataRecording:
+            self.CancelBtn.setText("Stop Recording")
+        else:
+            self.CancelBtn.setText("Start Recording")
         #todo: If false, stop recording
         pass
 

@@ -1,32 +1,43 @@
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from PyQt5.Qt3DCore import *
-from PyQt5.Qt3DExtras import *
+
 
 from face_prediction import *
 
 
 class Idle(QThread):
-    pass
-
-class Camera_Worker(QThread):
-
     ImageUpdate = pyqtSignal(QImage)
+    Face = None
+    frame = None
+    width = 0
+    height = 0
+
+    def run(self):
+        self.ThreadActive = True
+        while True:
+            #Set black image
+            Image = QPixmap(560,480)
+            Image.fill(Qt.black)
+            self.ImageUpdate.emit(Image)
+
+    def stop(self):
+        self.ThreadActive = False
+        self.quit()
+
+class Camera_Worker(Idle):
     Face = SP_68points()
 
     #Get feed from camera 0
     cap = cv2.VideoCapture(0)
 
-    frame = None
-    width = 0
-    height = 0
-
     #Display option flags
-    showFaceTrack = False
-    showLandmarks = False
-    showNose = False
-    showPose = False
+    bShowFaceTrack = False
+    bShowLandmarks = False
+    bShowNose = False
+    bShowPose = False
+    bExportFile = False
+    bExportImg = False
 
     def run(self):
         self.ThreadActive = True
@@ -43,14 +54,14 @@ class Camera_Worker(QThread):
                 faces = self.Face.getFaces()
 
                 for face in faces:
-                    if self.showFaceTrack:
+                    if self.bShowFaceTrack:
                         self.displayFaceTrack(face, self.frame)
 
-                    if self.showLandmarks:
+                    if self.bShowLandmarks:
                         landmarks = self.Face.getLandmarks(face)
                         self.displayLandmarks(landmarks, self.frame)
 
-                    if self.showPose:
+                    if self.bShowPose:
                         landmarks = self.Face.getLandmarks(face)
                         end_point2D = self.poseEstimation(self.frame)
 
@@ -59,7 +70,7 @@ class Camera_Worker(QThread):
 
                         cv2.line(self.frame, p1, p2, (0,0,255), 2)
                         
-                    if self.showNose:
+                    if self.bShowNose:
                         landmarks = self.Face.getLandmarks(face)
                         self.displayNose(self.frame, landmarks)
 
@@ -71,24 +82,24 @@ class Camera_Worker(QThread):
                 Pic = ConvertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
                 self.ImageUpdate.emit(Pic)
             
-    def stop(self):
-        self.ThreadActive = False
-        self.quit()
 
     def setSFT(self, bFlag):
-        self.showFaceTrack = bFlag
+        self.bShowFaceTrack = bFlag
 
     def setSL(self, bFlag):
-        self.showLandmarks = bFlag
+        self.bShowLandmarks = bFlag
 
     def setSN(self, bFlag):
-        self.showNose = bFlag
+        self.bShowNose = bFlag
 
     def setSP(self, bFlag):
-        self.showPose = bFlag
+        self.bShowPose = bFlag
 
     def setFileExport(self, bFlag):
-        pass
+        self.bExportFile = bFlag
+    
+    def setImgExport(self, bFlag):
+        self.bExportImg = bFlag
 
     def displayNose(self, frame, landmarks):
         x = landmarks.part(34-1).x #todo: get nose
@@ -130,6 +141,10 @@ class Camera_Worker(QThread):
                             
         return camera_matrix
 
+    def stop(self):
+        self.ThreadActive = False
+        self.quit()
+
 
 class Media_Worker(Camera_Worker):
 
@@ -153,14 +168,14 @@ class Media_Worker(Camera_Worker):
                 faces = self.Face.getFaces()
 
                 for face in faces:
-                    if self.showFaceTrack:
+                    if self.bShowFaceTrack:
                         self.displayFaceTrack(face, self.frame)
 
-                    if self.showLandmarks:
+                    if self.bShowLandmarks:
                         landmarks = self.Face.getLandmarks(face)
                         self.displayLandmarks(landmarks, self.frame)
 
-                    if self.showPose:
+                    if self.bShowPose:
                         landmarks = self.Face.getLandmarks(face)
                         end_point2D = self.poseEstimation(self.frame)
 
@@ -169,7 +184,7 @@ class Media_Worker(Camera_Worker):
 
                         cv2.line(self.frame, p1, p2, (0,0,255), 2)
                         
-                    if self.showNose:
+                    if self.bShowNose:
                         landmarks = self.Face.getLandmarks(face)
                         self.displayNose(self.frame, landmarks)
 

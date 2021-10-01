@@ -90,9 +90,10 @@ class ShapePredictor:
             file.write('}\n')
             file.close()
 
-    def SaveCropped(self):
+    def SaveCropped(self, img, x, y, w, h):
         bbox_scale = 1.05
-        #todo face_img = img[]
+        #todo face_img = img[y:y+h, x:x+w]
+        #     cv2.imwrite('frame.png', face_img)
 
 
 class SP_68points(ShapePredictor):
