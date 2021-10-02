@@ -17,23 +17,22 @@ from datetime import datetime
 fileOutputEnabled = True
 
 
-
 class ShapePredictorBase:
+
+    # identify key landmarks for face direction
+    numLandmarks = 0
+    landmarks = None
+
+    detector = None 
+    predictor = None
+    cap_points = None
+
+    # Camera
+    frame = None
+    Grey_Image = None
     def __init__(self):
         #set init time
         self.initTime=datetime.now()
-
-        # identify key landmarks for face direction
-        self.numLandmarks = 0
-        self.landmarks = None
-
-        self.detector = None
-        self.predictor = None
-        self.cap_points = None
-
-        # Camera
-        self.frame = None
-        self.Grey_Image = None
         self.cap_points = np.array([])
         self.model_points = np.array([])
 
@@ -62,15 +61,17 @@ class ShapePredictorBase:
             (self.landmarks.part(self.left_eye-1).x, self.landmarks.part(self.left_eye-1).y),     # Left eye left corner
             (self.landmarks.part(self.right_eye-1).x, self.landmarks.part(self.right_eye-1).y),     # Right eye right corne
             (self.landmarks.part(self.left_mouth-1).x, self.landmarks.part(self.left_mouth-1).y),     # Left Mouth corner
-            (self.landmarks.part(self.right_mouth-1).x, self.landmarks.part(self.right_mouth-1).y)      # Right mouth corner
-        ], dtype="double")
+            (self.landmarks.part(self.right_mouth-1).x, self.landmarks.part(self.right_mouth-1).y)],      # Right mouth corner
+            dtype="double"
+        )
 
         #SolvePnP for camera
-        (success, rotation_vector, translation_vector) = cv2.solvePnP(self.model_points,
-                                                                self.cap_points,
-                                                                camera_matrix,
-                                                                distortion,
-                                                                flags=cv2.SOLVEPNP_ITERATIVE
+        (success, rotation_vector, translation_vector) = (
+            cv2.solvePnP(self.model_points,
+            self.cap_points,
+            camera_matrix,
+            distortion,
+            flags=cv2.SOLVEPNP_ITERATIVE)
         )
 
         #Rotation vec to matrix
@@ -84,14 +85,14 @@ class ShapePredictorBase:
             self.initialRotationSet = True
 
         new_rotation = rotation_euler-self.initialRotation
-        print(new_rotation)
 
         #Project back to 2D
-        (nose_end_point2D, jacobian) = cv2.projectPoints(np.array([(0.0, 0.0, 1000.0)]),
-                                                                    rotation_vector,
-                                                                    translation_vector,
-                                                                    camera_matrix,
-                                                                    distortion
+        (nose_end_point2D, jacobian) = (
+            cv2.projectPoints(np.array([(0.0, 0.0, 1000.0)]),
+            rotation_vector,
+            translation_vector,
+            camera_matrix,
+            distortion)
         )
         return nose_end_point2D
 
@@ -137,12 +138,12 @@ class SP_68points(ShapePredictorBase):
 
         # 3D model points (taken from [3])
         self.model_points = np.array([
-                            (0.0, 0.0, 0.0),             # Nose tip
-                            (0.0, -330.0, -65.0),        # Chin
-                            (-225.0, 170.0, -135.0),     # Left eye left corner
-                            (225.0, 170.0, -135.0),      # Right eye right corne
-                            (-150.0, -150.0, -125.0),    # Left Mouth corner
-                            (150.0, -150.0, -125.0)      # Right mouth corner
+            (0.0, 0.0, 0.0),             # Nose tip
+            (0.0, -330.0, -65.0),        # Chin
+            (-225.0, 170.0, -135.0),     # Left eye left corner
+            (225.0, 170.0, -135.0),      # Right eye right corne
+            (-150.0, -150.0, -125.0),    # Left Mouth corner
+            (150.0, -150.0, -125.0)      # Right mouth corner
         ])                                                                                                                                                                                                                                                                                                                       
 
         # shape_predictor_68_face_landmarks.dat file must be in same directory
@@ -159,12 +160,12 @@ class SP_81points(SP_68points):
 
         # 3D model points (taken from [3])
         self.model_points = np.array([
-                            (0.0, 0.0, 0.0),             # Nose tip
-                            (0.0, -330.0, -65.0),        # Chin
-                            (-225.0, 170.0, -135.0),     # Left eye left corner
-                            (225.0, 170.0, -135.0),      # Right eye right corne
-                            (-150.0, -150.0, -125.0),    # Left Mouth corner
-                            (150.0, -150.0, -125.0)      # Right mouth corner
+            (0.0, 0.0, 0.0),             # Nose tip
+            (0.0, -330.0, -65.0),        # Chin
+            (-225.0, 170.0, -135.0),     # Left eye left corner
+            (225.0, 170.0, -135.0),      # Right eye right corne
+            (-150.0, -150.0, -125.0),    # Left Mouth corner
+            (150.0, -150.0, -125.0)      # Right mouth corner
         ])
 
         # shape_predictor_68_face_landmarks.dat file must be in same directory
@@ -179,8 +180,7 @@ class SP_Mediapipe(ShapePredictorBase):
 
 
 
-#Utility functions
- #From https://learnopencv.com/rotation-matrix-to-euler-angles/ -------------
+#Utility functions from https://learnopencv.com/rotation-matrix-to-euler-angles/ -------------
 # Checks if a matrix is a valid rotation matrix.
 def isRotationMatrix(R) :
     Rt = np.transpose(R)

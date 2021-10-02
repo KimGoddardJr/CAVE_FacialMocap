@@ -114,10 +114,22 @@ class Camera_Worker(Idle):
         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 3)
 
     def displayLandmarks(self, landmarks, frame):
-        for n in range(0, 68): #todo: update numLandmarks
+        bLines = True
+        for n in range(0, 67): #todo: update numLandmarks
             x = landmarks.part(n).x
             y = landmarks.part(n).y
-            cv2.circle(frame, (x, y), 4, (255, 0, 0), -1)
+            cv2.circle(frame, (x, y), 3, (255, 0, 0), -1)
+
+            dont_connect = [16, 21, 26, 35, 41, 47, 67]
+            if bLines:
+                if n not in dont_connect:
+                    p0 = (landmarks.part(n).x,landmarks.part(n).y)
+                    p1 = (landmarks.part(n+1).x,landmarks.part(n+1).y)
+                    cv2.line(frame, p0, p1, (200,0,55), 2)
+                #close nose triangle
+                p0 = (landmarks.part(30).x,landmarks.part(30).y)
+                p1 = (landmarks.part(35).x,landmarks.part(35).y)
+                cv2.line(frame, p0, p1, (200,0,55), 2)
 
     def poseEstimation(self, frame):
 
