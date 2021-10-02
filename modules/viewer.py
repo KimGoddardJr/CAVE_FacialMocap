@@ -12,9 +12,9 @@ except:
 
 import numpy as np
 
-from mask_geometry import *
-from input_stream import *
-import data_export
+from modules.mask_geometry import *
+from modules.input_stream import *
+import modules.data_export
 
 #Display option flags
 showFaceTrack = False

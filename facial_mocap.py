@@ -12,7 +12,7 @@ See individual modules for code references and resources
 See written report for academic references and theory
 """
 
-from viewer import MainWindow
+from modules.viewer import MainWindow
 
 from PyQt5.QtWidgets import *
 import sys

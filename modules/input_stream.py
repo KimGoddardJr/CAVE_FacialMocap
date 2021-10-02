@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 
 
-from face_prediction import *
+from modules.face_prediction import *
 
 
 class Idle(QThread):
