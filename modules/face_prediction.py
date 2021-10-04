@@ -16,7 +16,6 @@ from datetime import datetime
 
 fileOutputEnabled = True
 
-
 class ShapePredictorBase:
 
     # identify key landmarks for face direction
@@ -39,9 +38,17 @@ class ShapePredictorBase:
         #Set to true once initial head rotation (euler) is found
         self.initialRotation = np.zeros(3)
         self.initialRotationSet = False
+        self.currentRotation = self.initialRotation
 
     def setImgFrame(self, frame):
         self.Grey_Image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    def setRotation(self, euler_angles):
+        if not self.initialRotationSet:
+            self.initialRotation = euler_angles
+            self.initialRotationSet = True
+
+        self.currentRotation = euler_angles-self.initialRotation
 
     def getFaces(self):
         #Run Face Detection
@@ -79,12 +86,7 @@ class ShapePredictorBase:
         rotation_euler = np.zeros(3)
         cv2.Rodrigues(rotation_vector, rotation_matrix)
         rotation_euler = rotationMatrixToEulerAngles(rotation_matrix)
-
-        if not self.initialRotationSet:
-            self.initialRotation = rotation_euler
-            self.initialRotationSet = True
-
-        new_rotation = rotation_euler-self.initialRotation
+        self.setRotation(rotation_euler)
 
         #Project back to 2D
         (nose_end_point2D, jacobian) = (
@@ -96,6 +98,7 @@ class ShapePredictorBase:
         )
         return nose_end_point2D
 
+    
     def writePts(self):
         if fileOutputEnabled:
             #Writes as----> Run-time: nose.x,nose.y chin.x,chin.y ....etc

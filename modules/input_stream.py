@@ -2,16 +2,21 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 
-
+from modules.data_export import TCPController, IMSLLController
 from modules.face_prediction import *
 
 
 class Idle(QThread):
+    #Comms
+    TCP = None
+    IMSLL = None
+    #Img stream
     ImageUpdate = pyqtSignal(QImage)
     Face = None
     frame = None
     width = 0
     height = 0
+
 
     def run(self):
         self.ThreadActive = True
@@ -212,4 +217,3 @@ class Media_Worker(Camera_Worker):
     def stop(self):
         self.ThreadActive = False
         self.quit()
-

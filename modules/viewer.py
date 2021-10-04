@@ -5,16 +5,15 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 
 try:
-    from PyQt5.Qt3DCore import *
-    from PyQt5.Qt3DExtras import *
+    import PyQt5.Qt3DCore
+    import PyQt5.Qt3DExtras
 except:
     print("PyQt3D not found")
 
 import numpy as np
 
-from modules.mask_geometry import *
 from modules.input_stream import *
-import modules.data_export
+import modules.mask_geometry as geom
 
 #Display option flags
 showFaceTrack = False
@@ -23,7 +22,7 @@ showNose = False
 showPose = False
 
 class MainWindow(QWidget):
-    def __init__(self):
+    def __init__(self, mode):
         super(MainWindow, self).__init__()
 
         self.streamEnabled = False
@@ -51,7 +50,7 @@ class MainWindow(QWidget):
     def Show(self):
         #3D Window to Widget
         self.view = Qt3DWindow()
-        scene = demo_Scene()
+        scene = geom.demo_Scene()
         demo = scene.createScene()
         # Camera
         camera = self.view.camera()
@@ -188,15 +187,19 @@ class MainWindow(QWidget):
         self.CurrentThread.start()
           
     def TglDataExport(self):
-        print("Exporting data...")
         self.DataRecording = not self.DataRecording
         #todo: If true, start recording
-        if self.DataRecording:
-            self.CancelBtn.setText("Stop Recording")
-        else:
+
+        if not self.DataRecording:
             self.CancelBtn.setText("Start Recording")
-        #todo: If false, stop recording
-        pass
+            if self.CurrentThread.TCP != None:
+                self.TCP.CurrentThread.Stop()
+        else:
+            self.CancelBtn.setText("Stop Recording")
+            print("Exporting data...")
+            if self.CurrentThread.TCP != None:
+             self.CurrentThread.TCP.Run()
+
 
     def TglFaceLoc(self):
         if self.streamEnabled or self.mediaEnabled:
