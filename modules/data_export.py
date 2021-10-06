@@ -4,18 +4,21 @@ import socket
 from time import sleep
 from PyQt5.QtCore import QThread
 
-
 class TCPController(QThread):
-    def run(self):
+    def Run(self):
         self.ThreadActive = True
         self.tcp = MySocket()
         self.tcp.Run()
 
-    def stop(self):
+    def Stop(self):
         self.tcp.Stop()
         self.ThreadActive = False
         self.quit()
 
+    def SetMessage(self, msg):
+        self.tcp.SetMessage(msg)
+
+#class IMSLLController(QThread):
 
 class MySocket(socket.socket):
 
@@ -24,7 +27,8 @@ class MySocket(socket.socket):
         self.HOST = '127.0.0.1'  # localhost
         self.PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
         self.Running = False
-        self.message = "hello!"
+        self.message = "."
+        self.DataReceived = False
 
     def Run(self):
         print("Run TCP")
@@ -36,11 +40,12 @@ class MySocket(socket.socket):
                 conn, addr = s.accept()
                 with conn:
                     print('Connected to', addr)
-                    while True:
+                    while True and self.DataReceived:
                         conn.send(self.message.encode())
-                        sleep(2)
+                        self.DataReceived = False
 
     def SetMessage(self, message):
+        self.DataReceived = True
         self.message = message
 
     def Stop(self):

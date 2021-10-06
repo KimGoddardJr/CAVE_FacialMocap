@@ -14,7 +14,7 @@ import math
 
 from datetime import datetime
 
-fileOutputEnabled = True
+fileOutputEnabled = False
 
 class ShapePredictorBase:
 
@@ -49,6 +49,9 @@ class ShapePredictorBase:
             self.initialRotationSet = True
 
         self.currentRotation = euler_angles-self.initialRotation
+
+    def getRotation(self):
+        return self.currentRotation
 
     def getFaces(self):
         #Run Face Detection
@@ -86,6 +89,7 @@ class ShapePredictorBase:
         rotation_euler = np.zeros(3)
         cv2.Rodrigues(rotation_vector, rotation_matrix)
         rotation_euler = rotationMatrixToEulerAngles(rotation_matrix)
+
         self.setRotation(rotation_euler)
 
         #Project back to 2D
@@ -98,7 +102,6 @@ class ShapePredictorBase:
         )
         return nose_end_point2D
 
-    
     def writePts(self):
         if fileOutputEnabled:
             #Writes as----> Run-time: nose.x,nose.y chin.x,chin.y ....etc
@@ -152,36 +155,6 @@ class SP_68points(ShapePredictorBase):
         # shape_predictor_68_face_landmarks.dat file must be in same directory
         self.detector = dlib.get_frontal_face_detector()
         self.predictor = dlib.shape_predictor("./data/shape_predictor_68_face_landmarks.dat")
-
-class SP_81points(SP_68points):
-    def __init__(self):
-        #set init time
-        self.initTime=datetime.now()
-
-        # identify key landmarks for face direction
-        self.numLandmarks = 81
-
-        # 3D model points (taken from [3])
-        self.model_points = np.array([
-            (0.0, 0.0, 0.0),             # Nose tip
-            (0.0, -330.0, -65.0),        # Chin
-            (-225.0, 170.0, -135.0),     # Left eye left corner
-            (225.0, 170.0, -135.0),      # Right eye right corne
-            (-150.0, -150.0, -125.0),    # Left Mouth corner
-            (150.0, -150.0, -125.0)      # Right mouth corner
-        ])
-
-        # shape_predictor_68_face_landmarks.dat file must be in same directory
-        self.detector = dlib.get_frontal_face_detector()
-        #self.predictor = dlib.shape_predictor("shape_predictor_81_face_landmarks.dat")
-
-class SP_Mediapipe(ShapePredictorBase):
-    #For implementation of mediapipe landmarks instead
-    pass
-
-
-
-
 
 #Utility functions from https://learnopencv.com/rotation-matrix-to-euler-angles/ -------------
 # Checks if a matrix is a valid rotation matrix.

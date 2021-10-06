@@ -4,9 +4,13 @@ Facial animation from webcam data to Unreal Engine.
 
 Dependencies:
 * OpenCV
-* PyQt5 and PyQt3D 
+* PyQt5
 * dlib
-* eos 3D Morphable Face Model fitting library
+
+Optional
+* PyQt3D
+* eos
+* mediapipe
 
 See individual modules for code references and resources
 See written report for academic references and theory
