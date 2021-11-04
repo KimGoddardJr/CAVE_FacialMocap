@@ -1,16 +1,21 @@
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
+from PySide2.QtGui import *
+from PySide2.QtWidgets import *
+from PySide2.QtCore import *
 
-from modules.data_export import TCPController, IMSLLController
+from modules.data_export import TCPController
 from modules.face_prediction import *
 
+import time
+
+MEDIA_PATH = "./data/video1.mp4"
+
 class Idle(QThread):
+    ThreadActive = True
     #Comms
     TCP = TCPController()
     bSendData = False
     #Img stream
-    ImageUpdate = pyqtSignal(QImage)
+    ImageUpdate = Signal(QImage)
     bDisplayImg = True
     Face = None
     frame = None
@@ -20,11 +25,12 @@ class Idle(QThread):
 
     def run(self):
         self.ThreadActive = True
-        while True:
+        while self.ThreadActive is True:
             #Set black image
             Image = QPixmap(560,480)
             Image.fill(Qt.black)
             self.ImageUpdate.emit(Image)
+            time.sleep(1)
 
 
     # Set all the flags from the GUI ---------------------------
@@ -60,9 +66,12 @@ class Idle(QThread):
             print(rVec)
             self.TCP.SetMessage(rVec)
             self.last_data_sent = rVec
+        else:
+            print("eq")
 
     def stop(self):
         self.ThreadActive = False
+        print("Quit Idle")
         self.quit()
 
 class Camera_Worker(Idle):
@@ -104,6 +113,10 @@ class Camera_Worker(Idle):
                     ConvertToQtFormat = QImage(FlippedImage.data, FlippedImage.shape[1], FlippedImage.shape[0], QImage.Format_RGB888)
                     Pic = ConvertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
                     self.ImageUpdate.emit(Pic)
+                
+                if self.bSendData:
+                    print("Head Rotation")
+                    self.sendHeadRotation()
 
     def ExecuteFaceDetectors(self):
         faces = self.Face.getFaces()
@@ -179,6 +192,7 @@ class Camera_Worker(Idle):
 
     def stop(self):
         self.ThreadActive = False
+        print("Quit Camera")
         self.quit()
 
 
@@ -186,7 +200,7 @@ class Media_Worker(Camera_Worker):
     path = ""
 
     def run(self):
-        self.setMediaPath("./data/video.mp4")
+        self.setMediaPath(MEDIA_PATH)
         self.ThreadActive = True
         print("Starting media player...")
         cap = cv2.VideoCapture(self.path)
@@ -194,7 +208,7 @@ class Media_Worker(Camera_Worker):
         if (cap.isOpened()== False):
             print("Error: Could not read video file.")
 
-        while(cap.isOpened() and self.ThreadActive == True):
+        while(cap.isOpened() and self.ThreadActive):
             #capture frame by frame
             _, self.frame = cap.read()
             if _:
@@ -236,4 +250,5 @@ class Media_Worker(Camera_Worker):
 
     def stop(self):
         self.ThreadActive = False
+        print("Quit Media")
         self.quit()

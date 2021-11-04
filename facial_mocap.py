@@ -4,21 +4,15 @@ Facial animation from webcam data to Unreal Engine.
 
 Dependencies:
 * OpenCV
-* PyQt5
+* PySide2
 * dlib
-
-Optional
-* PyQt3D
-* eos
-* mediapipe
 
 See individual modules for code references and resources
 See written report for academic references and theory
 """
 import sys
 from enum import Enum
-from PyQt5.QtWidgets import *
-
+from PySide2 import QtWidgets
 
 from modules.viewer import MainWindow
 
@@ -35,7 +29,7 @@ bShowGeomPreview = False
 if __name__ == "__main__":
     import sys
 
-    App = QApplication(sys.argv)
+    App = QtWidgets.QApplication(sys.argv)
     Root = MainWindow(Mode.TCP_ONLY)
     #Main GUI:
     Root.show()

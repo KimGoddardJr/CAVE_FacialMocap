@@ -1,19 +1,18 @@
 # Qt5/OpenCV window code modified from: https://www.codepile.net/pile/ey9KAnxn
 
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
+from PySide2.QtGui import *
+from PySide2.QtWidgets import *
+from PySide2.QtCore import *
 
 try:
-    import PyQt5.Qt3DCore
-    import PyQt5.Qt3DExtras
+    import PySide2.Qt3DCore
+    import PySide2.Qt3DExtras
 except:
     print("PyQt3D not found")
 
 import numpy as np
 
 from modules.input_stream import *
-import modules.mask_geometry as geom
 
 #Display option flags
 showFaceTrack = False
@@ -27,11 +26,11 @@ class MainWindow(QWidget):
 
         self.streamEnabled = False
         self.mediaEnabled = False
-        self.CurrentThread = None
+        self.CurrentThread = Idle()
         self.DataRecording = False
 
         #Window
-        title = "OpenCV Face Mocap [WIP] - s5400010"
+        title = "OpenCV Face Mocap - s5400010"
         self.setWindowTitle(title)
 
         self.layout = QHBoxLayout()
@@ -45,22 +44,6 @@ class MainWindow(QWidget):
 
         # Child layout to Window
         self.setLayout(self.layout)
-
-
-    def Show(self):
-        #3D Window to Widget
-        self.view = Qt3DWindow()
-        scene = geom.demo_Scene()
-        demo = scene.createScene()
-        # Camera
-        camera = self.view.camera()
-        camera.lens().setPerspectiveProjection(45.0, 16.0/9.0, 0.1, 1000.0)
-        camera.setPosition(QVector3D(0, 0, 40.0))
-        camera.setViewCenter(QVector3D(0, 0, 0))
-        self.view.setRootEntity(demo)
-        self.view.defaultFrameGraph().setClearColor(QColor("#4d4d4f"))
-        self.container = self.createWindowContainer(self.view)
-        self.container.show()
 
     def SetUpUI(self):
 
@@ -111,9 +94,9 @@ class MainWindow(QWidget):
         verticalSpacer = QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)
         self.VBL.addItem(verticalSpacer)
 
-        self.CancelBtn = QPushButton("Start Data Record")
-        self.CancelBtn.clicked.connect(self.TglDataExport)
-        self.VBL.addWidget(self.CancelBtn)
+        self.RecordBtn = QPushButton("Start Data Record")
+        self.RecordBtn.clicked.connect(self.TglDataExport)
+        self.VBL.addWidget(self.RecordBtn)
 
         self.enableFile = QCheckBox("Write to File")
         self.enableFile.setChecked(False)
@@ -143,14 +126,20 @@ class MainWindow(QWidget):
 
     def SelectInput(self):
         newIndex = self.camSelect.currentIndex()
-        if self.streamEnabled or self.mediaEnabled == True:
+        if self.CurrentThread.ThreadActive:
             self.CurrentThread.stop()
             print("Stopped running thread....")
         if newIndex == 2: #play from file
             print("Input: Media")
+
+            #TODO: Get video path from user
+            #box = QFileDialog()
+            #file = box.getOpenFileName(self, str("Open File"), "/home", str("Video File (*.mp4)"))
+            
             self.streamEnabled = False
             self.mediaEnabled = True
             self.CurrentThread = Media_Worker()
+            self.CurrentThread.ThreadActive = False
             #Pass on button settings from GUI
             self.CurrentThread.setSFT(showFaceTrack)
             self.CurrentThread.setSL(showLandmarks)
@@ -164,6 +153,7 @@ class MainWindow(QWidget):
             self.streamEnabled = True
             self.mediaEnabled = False
             self.CurrentThread = Camera_Worker()
+            self.CurrentThread.ThreadActive = False
             #Pass on button settings from GUI
             self.CurrentThread.setSFT(showFaceTrack)
             self.CurrentThread.setSL(showLandmarks)
@@ -174,6 +164,7 @@ class MainWindow(QWidget):
             self.pathEdit.setEnabled(False)
         else:
             print("Input: None") 
+            self.CurrentThread = Idle()
             self.streamEnabled = False
             self.mediaEnabled = False
 
@@ -181,8 +172,8 @@ class MainWindow(QWidget):
             self.enableFile.setCheckable(False)
             self.enableImg.setCheckable(False)
             self.pathEdit.setEnabled(False)
-            return
 
+        print("Connect ImageUpdate")
         self.CurrentThread.ImageUpdate.connect(self.ImageUpdateSlot)
         self.CurrentThread.start()
           
@@ -191,14 +182,14 @@ class MainWindow(QWidget):
         #todo: If true, start recording
 
         if not self.DataRecording:
-            self.CancelBtn.setText("Start Recording")
+            self.RecordBtn.setText("Start Recording")
             if self.CurrentThread.TCP != None:
-                self.TCP.CurrentThread.Stop()
+                self.CurrentThread.TCP.Stop()
         else:
-            self.CancelBtn.setText("Stop Recording")
+            self.RecordBtn.setText("Stop Recording")
             print("Exporting data...")
             if self.CurrentThread.TCP != None:
-             self.CurrentThread.TCP.Run()
+                self.CurrentThread.TCP.Run()
 
 
     def TglFaceLoc(self):
